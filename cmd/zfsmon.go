@@ -3,6 +3,7 @@ package cmd
 import (
     "fmt"
     "errors"
+    "time"
 
     zfs "github.com/bicomsystems/go-libzfs-0.2"
     "github.com/jsirianni/slacklib/slacklib"
@@ -13,6 +14,8 @@ var channel string
 var daemon bool
 var printReport bool
 var noAlert bool
+var alerts string // stores zpool names that have been alerted
+var checkInt int
 
 type ZpoolReport struct {
     Name string
@@ -25,6 +28,30 @@ type Device struct {
     Type zfs.VDevType
     State zfs.VDevState
     Devices []Device
+}
+
+
+func run() error {
+    for {
+        err := zfsmon()
+
+        // if daemon mode, print the error and continue running
+        if err != nil {
+            if daemon == true {
+                fmt.Println(err.Error())
+            } else {
+                return err
+            }
+        }
+
+        // if daemon mode, sleep and then run again
+        // if not daemon mode, return nil
+        if daemon == true {
+            time.Sleep(time.Duration(checkInt * 60) * time.Second)
+        } else {
+            return nil
+        }
+    }
 }
 
 func zfsmon() error {
