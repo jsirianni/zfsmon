@@ -15,7 +15,6 @@ var channel string
 var daemon bool
 var printReport bool
 var noAlert bool
-var currentAlerts []string // stores zpool names that have been alerted
 var checkInt int
 
 type ZpoolReport struct {
@@ -79,37 +78,13 @@ func zfsmon() error {
     }
 
     // iterate all zpools
-    // store all errors in an array and return it in the end
     var zpoolErrors []error
     for _, zpool := range report {
-
         // if zpool is not healthy
         if zpool.State != zfs.VDevStateHealthy {
-            found := false
-
-            // set found to true if already alerted
-            for _, alert := range currentAlerts {
-                if zpool.Name == alert {
-                    found = true
-                }
-            }
-
-            // if zpool not in alert list, send alert
-            if found == false {
-                err := zpool.zfsAlert()
-                if err != nil {
-                    zpoolErrors = append(zpoolErrors, err)
-                }
-            }
-
-
-        // if zpool is healthy check if it was previously alerted on
-        // if found, remove it frm the array
-        } else {
-            for i, alert := range currentAlerts {
-                if zpool.Name == alert {
-                     currentAlerts[i] = ""
-                }
+            err := zpool.zfsAlert()
+            if err != nil {
+                zpoolErrors = append(zpoolErrors, err)
             }
         }
     }
@@ -125,6 +100,7 @@ func zfsmon() error {
     return nil
 }
 
+// send an alert to slack
 func (zpool *ZpoolReport) zfsAlert() error {
     var a alert.Slack
     a.HookURL = hook_url
@@ -140,15 +116,10 @@ func (zpool *ZpoolReport) zfsAlert() error {
         return nil
     }
 
-    // returns nil if alert is sent, else an error
-    for _, alert := range currentAlerts {
-        if zpool.Name == alert {
-            return nil
-        }
-    }
     return a.BasicMessage()
 }
 
+// Print displays the zpool health report to standard out
 func (zpool *ZpoolReport) Print() {
     fmt.Println("zpool:", zpool.Name, zpool.State.String())
     for _, d := range zpool.Devices {
@@ -159,6 +130,7 @@ func (zpool *ZpoolReport) Print() {
     }
 }
 
+// makeSystemReport builds an array of ZpooLReports
 func makeSystemReport() ([]ZpoolReport, error) {
 
     globalPools, err := zfs.PoolOpenAll()
