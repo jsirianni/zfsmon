@@ -5,8 +5,9 @@ import (
     "errors"
     "time"
 
+    "zfsmon/alert"
+
     zfs "github.com/bicomsystems/go-libzfs-0.2"
-    "github.com/jsirianni/slacklib/slacklib"
 )
 
 var hook_url string
@@ -14,7 +15,7 @@ var channel string
 var daemon bool
 var printReport bool
 var noAlert bool
-var alerts string // stores zpool names that have been alerted
+var currentAlerts []string // stores zpool names that have been alerted
 var checkInt int
 
 type ZpoolReport struct {
@@ -33,9 +34,15 @@ type Device struct {
 
 func run() error {
     for {
-        err := zfsmon()
+        /* zfsmon will
+            - build report
+            - print if --print is passed
+            - alert if --no-alert is NOT passed
 
-        // if daemon mode, print the error and continue running
+            if an error is returned in daemon mode, print the error
+            and do not exit
+        */
+        err := zfsmon()
         if err != nil {
             if daemon == true {
                 fmt.Println(err.Error())
@@ -55,7 +62,6 @@ func run() error {
 }
 
 func zfsmon() error {
-
      err := checkFlags()
      if err != nil {
         return err
@@ -72,28 +78,76 @@ func zfsmon() error {
         }
     }
 
+    // iterate all zpools
+    // store all errors in an array and return it in the end
+    var zpoolErrors []error
     for _, zpool := range report {
-        zpool.Alert()
-    }
 
-    return nil
-}
+        // if zpool is not healthy
+        if zpool.State != zfs.VDevStateHealthy {
+            found := false
 
-func (zpool *ZpoolReport) Alert() {
-    var alert slacklib.SlackPost
-    alert.Channel = channel
+            // set found to true if already alerted
+            for _, z := range currentAlerts {
+                if zpool.Name == z.Name {
+                    found == true
+                }
+            }
 
-    if zpool.State != zfs.VDevStateHealthy {
-        alert.Text = ("zpool " + zpool.Name + " is not in a healthy state, got: " + string(zpool.State.String()))
-    }
+            // if zpool not in alert list, send alert
+            if found == false {
+                err := zpool.zfsAlert()
+                if err != nil {
+                    zpoolErrors = append(zpoolErrors, err)
+                }
+            }
 
-    if len(alert.Text) != 0 {
-        if noAlert == true {
-            fmt.Println("skipping alert, --no-alert passed.")
+
+        // if zpool is healthy check if it was previously alerted on
+        // if found, remove it frm the array
         } else {
-            slacklib.BasicMessage(alert, hook_url)
+            for i, z := range currentAlerts {
+                if zpool.Name == z.Name {
+                     currentAlerts[i] = nil
+                }
+            }
         }
     }
+
+    // if errors, make a big error and return it
+    if len(zpoolErrors) != 0 {
+        var err string
+        for _, e := range zpoolErrors {
+            err = e.Error() + "\n"
+        }
+        return errors.New(err)
+    }
+    return nil
+}
+//     currentAlerts = append(currentAlerts, zpool.Name)
+
+func (zpool *ZpoolReport) zfsAlert() error {
+    var a alert.Slack
+    a.HookURL = hook_url
+    a.Post.Channel = channel
+    a.Post.Text = ("zpool " + zpool.Name + " is not in a healthy state, got: " + string(zpool.State.String()))
+
+    if len(a.Post.Text) == 0 {
+        return nil
+    }
+
+    if noAlert == true {
+        fmt.Println("skipping alert, --no-alert passed.")
+        return nil
+    }
+
+    // returns nil if alert is sent, else an error
+    for _, z := range currentAlerts {
+        if z.Name == zpool.Name {
+
+        }
+    }
+    return a.BasicMessage()
 }
 
 func (zpool *ZpoolReport) Print() {
