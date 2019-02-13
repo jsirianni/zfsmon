@@ -1,9 +1,11 @@
 package cmd
 
 import (
+    "os"
     "fmt"
     "errors"
     "time"
+    "bufio"
 
     "zfsmon/alert"
 
@@ -16,6 +18,7 @@ var daemon bool
 var printReport bool
 var noAlert bool
 var checkInt int
+var alertFile string
 
 type ZpoolReport struct {
     Name string
@@ -32,6 +35,9 @@ type Device struct {
 
 
 func run() error {
+
+    // ensure alert file exists
+
     for {
         /* zfsmon will
             - build report
@@ -80,12 +86,37 @@ func zfsmon() error {
     // iterate all zpools
     var zpoolErrors []error
     for _, zpool := range report {
-        // if zpool is not healthy
+
+        // if zpool is not healthy, send an alert and write alert to file
         if zpool.State != zfs.VDevStateHealthy {
             err := zpool.zfsAlert()
             if err != nil {
                 zpoolErrors = append(zpoolErrors, err)
+            // if alert success
+            } else {
+                // write alert to file
+                if err := manageAlertFile(zpool.Name, 0); err != nil {
+                    // if write to file fails, add error and alert again next
+                    // time the daemon runs
+                    zpoolErrors = append(zpoolErrors, err)
+                }
             }
+
+        // if zpool is healthy, remove from file if present, alert if removed
+        } else {
+            // alert that pool is now healthy
+            err := zpool.zfsAlert()
+            if err != nil {
+                zpoolErrors = append(zpoolErrors, err)
+            // alert success, remove from local file
+            } else {
+                if err := manageAlertFile(zpool.Name, 1); err != nil {
+                    // if remove from file fails, add error and alert again next
+                    // time the daemon runs
+                    zpoolErrors = append(zpoolErrors, err)
+                }
+            }
+
         }
     }
 
@@ -171,6 +202,46 @@ func makeSystemReport() ([]ZpoolReport, error) {
         }
     }
     return report, nil
+}
+
+// alertFile manages the alert file
+// action = 0 adds to file
+// action = 1 removes from file
+func manageAlertFile(zpoolName string, action int) error {
+    found := false
+
+    f, err := os.Open(alertFile)
+    defer f.Close()
+    if err != nil {
+        return err
+    }
+
+    scanner := bufio.NewScanner(f)
+    for scanner.Scan() {
+        if scanner.Text() == zpoolName {
+            found = true
+        }
+    }
+
+    // if found and action is to add, do nothing
+    if found == true && action == 0 {
+        return nil
+    }
+    // if not found and action to remove, do nothing
+    if found == false && action == 1 {
+        return nil
+    }
+    
+    // if found and action is to remove, remove from file
+    if found == true && action == 1 {
+        // remove from file here
+    }
+    // if not found and action is to add, add to file
+    if found == false && action == 0 {
+        // add to file here
+    }
+
+    return nil
 }
 
 func checkFlags() error {
