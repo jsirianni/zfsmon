@@ -88,9 +88,9 @@ func zfsmon() error {
             found := false
 
             // set found to true if already alerted
-            for _, z := range currentAlerts {
-                if zpool.Name == z.Name {
-                    found == true
+            for _, alert := range currentAlerts {
+                if zpool.Name == alert {
+                    found = true
                 }
             }
 
@@ -106,9 +106,9 @@ func zfsmon() error {
         // if zpool is healthy check if it was previously alerted on
         // if found, remove it frm the array
         } else {
-            for i, z := range currentAlerts {
-                if zpool.Name == z.Name {
-                     currentAlerts[i] = nil
+            for i, alert := range currentAlerts {
+                if zpool.Name == alert {
+                     currentAlerts[i] = ""
                 }
             }
         }
@@ -124,7 +124,6 @@ func zfsmon() error {
     }
     return nil
 }
-//     currentAlerts = append(currentAlerts, zpool.Name)
 
 func (zpool *ZpoolReport) zfsAlert() error {
     var a alert.Slack
@@ -142,9 +141,9 @@ func (zpool *ZpoolReport) zfsAlert() error {
     }
 
     // returns nil if alert is sent, else an error
-    for _, z := range currentAlerts {
-        if z.Name == zpool.Name {
-
+    for _, alert := range currentAlerts {
+        if zpool.Name == alert {
+            return nil
         }
     }
     return a.BasicMessage()
@@ -194,7 +193,8 @@ func makeSystemReport() ([]ZpoolReport, error) {
 
 
             // if vdev is a raidz object
-            if vdev.Type == zfs.VDevTypeRaidz {
+            //if vdev.Type == zfs.VDevTypeRaidz {
+            if len(vdev.Devices) > 0 {
                 report[t].Devices[i].Devices = make([]Device, len(vdev.Devices))
                 for n, disk := range vdev.Devices {
                     //fmt.Println("vdev:", disk.Name, disk.Type, disk.Stat.State)
