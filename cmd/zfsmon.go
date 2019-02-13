@@ -132,7 +132,6 @@ func (zpool *ZpoolReport) Print() {
 
 // makeSystemReport builds an array of ZpooLReports
 func makeSystemReport() ([]ZpoolReport, error) {
-
     globalPools, err := zfs.PoolOpenAll()
     defer zfs.PoolCloseAll(globalPools)
     if err != nil {
@@ -157,19 +156,13 @@ func makeSystemReport() ([]ZpoolReport, error) {
         // iterate each vdev and display results
         report[t].Devices = make([]Device, len(zpool.Devices))
         for i, vdev := range zpool.Devices {
-            // print the vdev, which could be a disk or a raidz object
-            //fmt.Println("vdev:", vdev.Name, vdev.Type, vdev.Stat.State)
             report[t].Devices[i].Name = vdev.Name
             report[t].Devices[i].Type = vdev.Type
             report[t].Devices[i].State = vdev.Stat.State
 
-
-            // if vdev is a raidz object
-            //if vdev.Type == zfs.VDevTypeRaidz {
             if len(vdev.Devices) > 0 {
                 report[t].Devices[i].Devices = make([]Device, len(vdev.Devices))
                 for n, disk := range vdev.Devices {
-                    //fmt.Println("vdev:", disk.Name, disk.Type, disk.Stat.State)
                     report[t].Devices[i].Devices[n].Name = disk.Name
                     report[t].Devices[i].Devices[n].Type = disk.Type
                     report[t].Devices[i].Devices[n].State = disk.Stat.State
