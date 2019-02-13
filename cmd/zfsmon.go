@@ -73,7 +73,7 @@ func zfsmon() error {
 
     if printReport == true {
         for _, zpool := range report {
-            zpool.Print()
+            zpool.print()
         }
     }
 
@@ -120,7 +120,7 @@ func (zpool *ZpoolReport) zfsAlert() error {
 }
 
 // Print displays the zpool health report to standard out
-func (zpool *ZpoolReport) Print() {
+func (zpool *ZpoolReport) print() {
     fmt.Println("zpool:", zpool.Name, zpool.State.String())
     for _, d := range zpool.Devices {
         fmt.Println("vdev:", d.Name, d.Type, d.State.String())
