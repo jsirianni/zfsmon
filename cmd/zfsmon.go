@@ -4,20 +4,17 @@ import (
     "os"
     "fmt"
     "errors"
-    "time"
     "bufio"
 
     "zfsmon/alert"
 
-    zfs "github.com/bicomsystems/go-libzfs-0.2"
+    zfs "github.com/jsirianni/go-libzfs"
 )
 
 var hook_url string
 var channel string
-var daemon bool
 var printReport bool
 var noAlert bool
-var checkInt int
 var alertFile string
 
 type ZpoolReport struct {
@@ -31,39 +28,6 @@ type Device struct {
     Type zfs.VDevType
     State zfs.VDevState
     Devices []Device
-}
-
-
-func run() error {
-
-    // ensure alert file exists
-
-    for {
-        /* zfsmon will
-            - build report
-            - print if --print is passed
-            - alert if --no-alert is NOT passed
-
-            if an error is returned in daemon mode, print the error
-            and do not exit
-        */
-        err := zfsmon()
-        if err != nil {
-            if daemon == true {
-                fmt.Println(err.Error())
-            } else {
-                return err
-            }
-        }
-
-        // if daemon mode, sleep and then run again
-        // if not daemon mode, return nil
-        if daemon == true {
-            time.Sleep(time.Duration(checkInt * 60) * time.Second)
-        } else {
-            return nil
-        }
-    }
 }
 
 func zfsmon() error {
@@ -96,8 +60,7 @@ func zfsmon() error {
             } else {
                 // write alert to file
                 if err := manageAlertFile(zpool.Name, 0); err != nil {
-                    // if write to file fails, add error and alert again next
-                    // time the daemon runs
+                    // if write to file fails, add error and alert again next time
                     zpoolErrors = append(zpoolErrors, err)
                 }
             }
@@ -111,8 +74,7 @@ func zfsmon() error {
             // alert success, remove from local file
             } else {
                 if err := manageAlertFile(zpool.Name, 1); err != nil {
-                    // if remove from file fails, add error and alert again next
-                    // time the daemon runs
+                    // if remove from file fails, add error and alert again next time
                     zpoolErrors = append(zpoolErrors, err)
                 }
             }
@@ -204,44 +166,82 @@ func makeSystemReport() ([]ZpoolReport, error) {
     return report, nil
 }
 
-// alertFile manages the alert file
 // action = 0 adds to file
 // action = 1 removes from file
 func manageAlertFile(zpoolName string, action int) error {
-    found := false
-
-    f, err := os.Open(alertFile)
-    defer f.Close()
+    // get []string of alerted pool names
+    alertedZpools, err := readAlertFile()
     if err != nil {
         return err
     }
 
-    scanner := bufio.NewScanner(f)
-    for scanner.Scan() {
-        if scanner.Text() == zpoolName {
-            found = true
+    found := -1
+    for i, z := range alertedZpools {
+        if z == zpoolName {
+            found = i
         }
     }
 
     // if found and action is to add, do nothing
-    if found == true && action == 0 {
+    if found != -1 && action == 0 {
         return nil
     }
-    // if not found and action to remove, do nothing
-    if found == false && action == 1 {
-        return nil
-    }
-    
-    // if found and action is to remove, remove from file
-    if found == true && action == 1 {
-        // remove from file here
-    }
-    // if not found and action is to add, add to file
-    if found == false && action == 0 {
-        // add to file here
+    // if not found and action is to add, add to array
+    if found == -1 && action == 0 {
+        alertedZpools = append(alertedZpools, zpoolName)
     }
 
+    // if not found and action to remove, do nothing
+    if found == -1 && action == 1 {
+        return nil
+    }
+    // if found and action is to remove, remove from array
+    if found != -1 && action == 1 {
+        alertedZpools = removeFromArray(alertedZpools, found)
+    }
+
+    // write array to file here
+    if err := writeAlertFile(alertedZpools); err != nil {
+        return err
+    }
+
+
     return nil
+}
+
+func removeFromArray(s []string, i int) []string {
+    s[len(s)-1], s[i] = s[i], s[len(s)-1]
+    return s[:len(s)-1]
+}
+
+func readAlertFile() ([]string, error) {
+    var a []string
+
+    f, err := os.Open(alertFile)
+    if err != nil {
+        return a, err
+    }
+    defer f.Close()
+
+    scanner := bufio.NewScanner(f)
+    for scanner.Scan() {
+        a = append(a, scanner.Text())
+    }
+    return a, nil
+}
+
+func writeAlertFile(a []string) error {
+    f, err := os.Create(alertFile)
+    if err != nil {
+        return err
+    }
+    defer f.Close()
+
+    w := bufio.NewWriter(f)
+    for _, alert := range a {
+        fmt.Fprintln(w, alert)
+    }
+    return w.Flush()
 }
 
 func checkFlags() error {
