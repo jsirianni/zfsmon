@@ -5,7 +5,6 @@ import (
     "fmt"
     "errors"
     "bufio"
-    "strconv"
 
     "zfsmon/alert"
 
@@ -204,9 +203,6 @@ func manageAlertFile(zpoolName string, action int) error {
             found = i
         }
     }
-
-    fmt.Println("found set to:", strconv.Itoa(found))
-    fmt.Println("action:", strconv.Itoa(action))
 
     // if found and action is to add, do nothing
     if found != -1 && action == 0 {
