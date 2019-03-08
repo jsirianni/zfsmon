@@ -13,3 +13,5 @@
 
 zfsmon
 zfsmon.zip
+*.SHA256SUMS
+*.zip
