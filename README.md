@@ -1,6 +1,6 @@
 # zfsmon
 
-`zfsmon` is a utility that sends slack alerts when a zpool becomes degraded. 
+`zfsmon` is a utility that sends slack alerts when a zpool becomes degraded.
 
 ## usage
 Available flags:
@@ -40,6 +40,13 @@ Run from cron every five minutes:
 zfsmon should be run with `sudo` or with root. Recent versions of ZFSonLinux
 do not require root for basic read only operations, however, zfsmon has not been tested
 this way.
+
+## install
+An install script is provided. It will place the binary in your path and setup
+a five minute cronjob. Pass a channel and hookurl as arguments
+```
+./deploy.sh <channel> <hookurl>
+```
 
 
 ## developing
