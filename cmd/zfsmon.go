@@ -5,6 +5,7 @@ import (
     "fmt"
     "errors"
     "bufio"
+    "strconv"
 
     "zfsmon/alert"
 
@@ -53,32 +54,39 @@ func zfsmon() error {
 
         // if zpool is not healthy, send an alert and write alert to file
         if zpool.State != zfs.VDevStateHealthy {
-            err := zpool.zfsAlert()
-            if err != nil {
-                zpoolErrors = append(zpoolErrors, err)
-            // if alert success
+             if poolAlerted(zpool.Name) == true {
+                fmt.Println("already alerted")
             } else {
-                // write alert to file
-                if err := manageAlertFile(zpool.Name, 0); err != nil {
-                    // if write to file fails, add error and alert again next time
+                err := zpool.zfsAlert()
+                if err != nil {
                     zpoolErrors = append(zpoolErrors, err)
+                // if alert success
+                } else {
+                    // write alert to file
+                    if err := manageAlertFile(zpool.Name, 0); err != nil {
+                        // if write to file fails, add error and alert again next time
+                        fmt.Println(err.Error())  // TODO: TEMP
+                        zpoolErrors = append(zpoolErrors, err)
+                    }
                 }
             }
 
         // if zpool is healthy, remove from file if present, alert if removed
         } else {
-            // alert that pool is now healthy
-            err := zpool.zfsAlert()
-            if err != nil {
-                zpoolErrors = append(zpoolErrors, err)
-            // alert success, remove from local file
-            } else {
-                if err := manageAlertFile(zpool.Name, 1); err != nil {
-                    // if remove from file fails, add error and alert again next time
+            // alert that pool is now healthy if found in alert file
+            if poolAlerted(zpool.Name) == true {
+                err := zpool.zfsAlert()
+                if err != nil {
                     zpoolErrors = append(zpoolErrors, err)
+                // alert success, remove from local file
+                } else {
+                    err := manageAlertFile(zpool.Name, 1)
+                    if err != nil {
+                        // if remove from file fails, add error and alert again next time
+                        zpoolErrors = append(zpoolErrors, err)
+                    }
                 }
             }
-
         }
     }
 
@@ -166,6 +174,21 @@ func makeSystemReport() ([]ZpoolReport, error) {
     return report, nil
 }
 
+func poolAlerted(name string) bool {
+    alertedZpools, err := readAlertFile()
+    if err != nil {
+        fmt.Println("failed to read alert file")
+        return false
+    }
+
+    for _, z := range alertedZpools {
+        if z == name {
+            return true
+        }
+    }
+    return false
+}
+
 // action = 0 adds to file
 // action = 1 removes from file
 func manageAlertFile(zpoolName string, action int) error {
@@ -181,6 +204,9 @@ func manageAlertFile(zpoolName string, action int) error {
             found = i
         }
     }
+
+    fmt.Println("found set to:", strconv.Itoa(found))
+    fmt.Println("action:", strconv.Itoa(action))
 
     // if found and action is to add, do nothing
     if found != -1 && action == 0 {
@@ -217,7 +243,7 @@ func removeFromArray(s []string, i int) []string {
 func readAlertFile() ([]string, error) {
     var a []string
 
-    f, err := os.Open(alertFile)
+    f, err := os.OpenFile(alertFile, os.O_RDONLY|os.O_CREATE, 0600)
     if err != nil {
         return a, err
     }
