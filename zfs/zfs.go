@@ -29,7 +29,7 @@ type Zfs struct {
 }
 
 // ZFSMon builds an array of zpool objects and performs health checks on them
-func (z *Zfs) ZFSMon() error {
+func (z Zfs) ZFSMon() error {
 	if err := z.ReadState(); err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (z *Zfs) ZFSMon() error {
 
 // checkPools takes an array of zpool objects and sends alert to slack for
 // every pool that is in a bad state
-func (z *Zfs) checkPools() (e error) {
+func (z Zfs) checkPools() (e error) {
 	for i, p := range z.Pools {
 		if p.State != libzfs.VDevStateHealthy {
 			if p.Alerted == false {
