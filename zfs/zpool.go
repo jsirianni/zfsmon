@@ -3,6 +3,7 @@ package zfs
 import (
 	"errors"
 	"fmt"
+	"encoding/json"
 
 	libzfs "github.com/jsirianni/go-libzfs"
 )
@@ -17,7 +18,7 @@ type Device struct {
 	Name    string
 	Type    libzfs.VDevType
 	State   libzfs.VDevState
-	Devices []Device
+	Devices []Device `json:",omitempty"`
 }
 
 // MakeSystemReport returns an array of Zpool objects
@@ -64,7 +65,16 @@ func MakeSystemReport() ([]Zpool, error) {
 }
 
 // Print displays the zpool health report to standard out
-func (zpool *Zpool) Print() {
+func (zpool *Zpool) Print(jsonFmt bool) error {
+	if jsonFmt {
+		b, err := json.MarshalIndent(zpool, " ", " ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(b))
+		return nil
+	}
+
 	fmt.Println("zpool:", zpool.Name, zpool.State.String())
 	for _, d := range zpool.Devices {
 		fmt.Println("vdev:", d.Name, d.Type, d.State.String())
@@ -72,4 +82,5 @@ func (zpool *Zpool) Print() {
 			fmt.Println("vdev:", s.Name, s.Type, s.State.String())
 		}
 	}
+	return nil
 }

@@ -17,6 +17,8 @@ type Zfs struct {
 	AlertFile    string
 	NoAlert      bool
 
+	JSONOutput  bool
+
 	Pools []Zpool
 }
 
@@ -29,7 +31,9 @@ func (z *Zfs) ZFSMon() error {
 	}
 
 	for _, pool := range z.Pools {
-		pool.Print()
+		if err := pool.Print(z.JSONOutput); err != nil {
+			return err
+		}
 	}
 
 	//return z.checkPools(zpools)
@@ -48,7 +52,7 @@ func (z Zfs) checkPools() error {
 		// if zpool is not healthy, send an alert and write the pool name to
 		// the alert file
 		if p.State != libzfs.VDevStateHealthy {
-			p.Print()
+			p.Print(z.JSONOutput)
 			if file.PoolAlerted(p.Name, z.AlertFile) == true {
 				fmt.Println(p.Name, "already alerted")
 			} else {

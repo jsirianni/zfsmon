@@ -15,6 +15,7 @@ var hookURL string
 var slackChannel string
 var alertFile string
 var noAlert bool
+var jsonFmt bool
 
 var z zfs.Zfs
 
@@ -44,6 +45,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&hookURL, "url", "", "hook url")
 	rootCmd.PersistentFlags().StringVar(&alertFile, "alert-file", "/tmp/zfsmon", "hook url")
 	rootCmd.PersistentFlags().BoolVar(&noAlert, "no-alert", false, "do not send alerts")
+	rootCmd.PersistentFlags().BoolVar(&jsonFmt, "json", false, "enable json output")
 }
 
 func initConfig() {
@@ -57,6 +59,7 @@ func initConfig() {
 		SlackChannel: slackChannel,
 		NoAlert:      noAlert,
 		AlertFile:    alertFile,
+		JSONOutput:   jsonFmt,
 	}
 }
 
