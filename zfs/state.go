@@ -3,9 +3,9 @@ package zfs
 import (
     "os"
     "fmt"
-    //"reflect"
     "encoding/json"
 
+    "github.com/jsirianni/zfsmon/zpool"
     "github.com/jsirianni/zfsmon/util/file"
 )
 
@@ -13,7 +13,7 @@ func (z *Zfs) ReadState() error {
     var err error
     var lastSavedState Zfs
 
-    z.Pools, err = RunningPools()
+    z.Pools, err = zpool.RunningPools()
 	if err != nil {
 		return err
 	}
@@ -25,7 +25,7 @@ func (z *Zfs) ReadState() error {
     }
 
     s := false
-    s, err = comparePools(z.Pools, lastSavedState.Pools)
+    s, err = zpool.ComparePools(z.Pools, lastSavedState.Pools)
     if err != nil {
         return err
     }
@@ -66,13 +66,4 @@ func (z Zfs) ReadStateFile() (Zfs, error) {
 
     err = json.Unmarshal(b, &newZfs)
     return newZfs, err
-}
-
-func comparePools(a, b []Zpool) (bool, error) {
-    for i, _ := range a {
-        if a[i].Name != b[i].Name {
-            return false, nil
-        }
-    }
-    return true, nil
 }

@@ -3,6 +3,7 @@ package zfs
 import (
 	"fmt"
 
+	"github.com/jsirianni/zfsmon/zpool"
 	"github.com/jsirianni/zfsmon/util/alert"
 
 	multierror "github.com/hashicorp/go-multierror"
@@ -18,7 +19,7 @@ type Zfs struct {
 
 	JSONOutput  bool
 
-	Pools []Zpool
+	Pools []zpool.Zpool
 }
 
 // ZFSMon builds an array of zpool objects and performs health checks on them
@@ -72,7 +73,7 @@ func (z *Zfs) checkPools() (e error) {
 
 // sendAlert sends a slack alert for a specific zpool, returns nil if z.NoAlert
 // is set to true
-func (z Zfs) sendAlert(pool Zpool, healthy bool) error {
+func (z Zfs) sendAlert(pool zpool.Zpool, healthy bool) error {
 	msg := "zpool " + pool.Name + " is not in a healthy state, got: " + pool.State.String()
 	if healthy {
 		msg = "zpool " + pool.Name + " is back to a healthy state, got: " + pool.State.String()

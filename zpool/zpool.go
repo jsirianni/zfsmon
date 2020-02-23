@@ -1,11 +1,11 @@
-package zfs
+package zpool
 
 import (
 	"fmt"
-	"errors"
 	"encoding/json"
 
 	libzfs "github.com/jsirianni/go-libzfs"
+	"github.com/pkg/errors"
 )
 
 type Zpool struct {
@@ -25,11 +25,33 @@ type Device struct {
 	Devices []Device `json:",omitempty"`
 }
 
-func (zpool *Zpool) Print(jsonFmt bool) error {
+// Print a Device object in json or standard output
+func (device Device) Print(jsonFmt bool) error {
+	if jsonFmt {
+		b, err := json.MarshalIndent(device, " ", " ")
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal Device object for printing in json format")
+		}
+		fmt.Println(string(b))
+		return nil
+	}
+
+	fmt.Println("device:", device.Name, device.Type, device.State.String())
+	for _, d := range device.Devices {
+		fmt.Println("vdev:", d.Name, d.Type, d.State.String())
+		for _, s := range d.Devices {
+			fmt.Println("vdev:", s.Name, s.Type, s.State.String())
+		}
+	}
+	return nil
+}
+
+// Print a Zpool object in json or standard output
+func (zpool Zpool) Print(jsonFmt bool) error {
 	if jsonFmt {
 		b, err := json.MarshalIndent(zpool, " ", " ")
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to marshal Zpool object for printing in json format")
 		}
 		fmt.Println(string(b))
 		return nil
@@ -45,6 +67,8 @@ func (zpool *Zpool) Print(jsonFmt bool) error {
 	return nil
 }
 
+// RunningPools returns a slice of Zpool objects that are detected
+// on the running system
 func RunningPools() ([]Zpool, error) {
 	globalPools, err := libzfs.PoolOpenAll()
 	defer libzfs.PoolCloseAll(globalPools)
