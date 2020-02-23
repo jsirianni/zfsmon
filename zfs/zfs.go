@@ -5,38 +5,45 @@ import (
 
 	"github.com/jsirianni/zfsmon/util/alert"
 	"github.com/jsirianni/zfsmon/util/file"
-	"github.com/jsirianni/zfsmon/zfs/zpool"
 
 	multierror "github.com/hashicorp/go-multierror"
 	libzfs "github.com/jsirianni/go-libzfs"
 )
 
-/// Zfs type holds the global configuration for the zfs package
+// Zfs type holds the global configuration for the zfs package
 type Zfs struct {
 	HookURL      string
 	SlackChannel string
 	AlertFile    string
 	NoAlert      bool
+
+	Pools []Zpool
 }
 
 // ZFSMon builds an array of zpool objects and performs health checks on them
-func (z Zfs) ZFSMon() error {
-	// discover zpools found on the system
-	zpools, err := zpool.MakeSystemReport()
+func (z *Zfs) ZFSMon() error {
+	var err error
+	z.Pools, err = MakeSystemReport()
 	if err != nil {
 		return err
 	}
-	return z.checkPools(zpools)
+
+	for _, pool := range z.Pools {
+		pool.Print()
+	}
+
+	//return z.checkPools(zpools)
+	return z.checkPools()
 }
 
 // checkPools takes an array of zpool objects and sends alert to slack for
 // every pool that is in a bad state
-func (z Zfs) checkPools(zpools []zpool.Zpool) error {
+func (z Zfs) checkPools() error {
 	// all errors will be collected with 'go-multierror' and returned at the
 	// end of this function
 	var e error
 
-	for _, p := range zpools {
+	for _, p := range z.Pools {
 
 		// if zpool is not healthy, send an alert and write the pool name to
 		// the alert file
@@ -79,7 +86,7 @@ func (z Zfs) checkPools(zpools []zpool.Zpool) error {
 
 // sendAlert sends a slack alert for a specific zpool, returns nil if z.NoAlert
 // is set to true
-func (z Zfs) sendAlert(pool zpool.Zpool) error {
+func (z Zfs) sendAlert(pool Zpool) error {
 	if z.NoAlert == true {
 		fmt.Println("skipping alert, --no-alert passed.")
 		return nil

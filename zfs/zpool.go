@@ -1,4 +1,4 @@
-package zpool
+package zfs
 
 import (
 	"errors"
