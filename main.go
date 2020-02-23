@@ -1,7 +1,7 @@
 package main
 
 import (
-    "zfsmon/cmd"
+    "github.com/jsirianni/zfsmon/cmd"
 )
 
 const VERSION = "0.2.0"

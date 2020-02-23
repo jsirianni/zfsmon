@@ -1,22 +1,26 @@
+# we use the go image for sourcing golang 1.13
+# and the ubuntu image becuase the native repos
+# contain the ZFS libraries required for building
+# zfsmon on Linux
+FROM golang:1.13 as go
 FROM ubuntu:bionic
 
 ARG version
 
-# Get build tools and dependency libs
+COPY --from=go /usr/local/go /usr/local/go
+RUN ln -s /usr/local/go/bin/go /usr/bin/go
+
 RUN apt-get update
 RUN apt-get install -y \
-        zip \
-	golang \
+    zip \
 	git \
+    gcc \
 	zfsutils-linux \
 	libzfslinux-dev
 
-# build the binary
-WORKDIR /src/zfsmon
-ENV GOPATH=/                                                                                   
-COPY . ./
-RUN go get github.com/spf13/cobra
-RUN go get github.com/jsirianni/go-libzfs
-RUN GOOS=linux GOARCH=amd64 go build -o zfsmon
+WORKDIR /zfsmon
+COPY . .
+RUN GOOS=linux GOARCH=amd64 go build -o artifacts/zfsmon
+WORKDIR /zfsmon/artifacts
 RUN zip zfsmon-v${version}-linux-amd64.zip zfsmon
 RUN sha256sum zfsmon-v${version}-linux-amd64.zip >> zfsmon-v${version}.SHA256SUMS

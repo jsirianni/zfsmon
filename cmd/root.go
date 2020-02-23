@@ -4,7 +4,7 @@ import (
     "fmt"
     "errors"
 
-    "zfsmon/zfs"
+    "github.com/jsirianni/zfsmon/zfs"
 
 	"github.com/spf13/cobra"
     multierror "github.com/hashicorp/go-multierror"

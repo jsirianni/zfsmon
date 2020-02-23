@@ -3,9 +3,9 @@ package zfs
 import (
     "fmt"
 
-    "zfsmon/util/alert"
-    "zfsmon/util/file"
-    "zfsmon/zfs/zpool"
+    "github.com/jsirianni/zfsmon/util/alert"
+    "github.com/jsirianni/zfsmon/util/file"
+    "github.com/jsirianni/zfsmon/zfs/zpool"
 
     libzfs "github.com/jsirianni/go-libzfs"
     multierror "github.com/hashicorp/go-multierror"
