@@ -20,6 +20,7 @@ RUN apt-get install -y \
 
 WORKDIR /zfsmon
 COPY . .
+RUN GOOS=linux GOARCH=amd64 go test ./...
 RUN GOOS=linux GOARCH=amd64 go build -o artifacts/zfsmon
 WORKDIR /zfsmon/artifacts
 RUN zip zfsmon-v${version}-linux-amd64.zip zfsmon
