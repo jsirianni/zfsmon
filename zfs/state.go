@@ -48,22 +48,27 @@ func (z *Zfs) ReadState() error {
     return nil
 }
 
-func (z Zfs) SaveStateFile() error {
+func (z *Zfs) SaveStateFile() error {
+    z.State.lock.Lock()
+    defer z.State.lock.Unlock()
+
     b, err := json.MarshalIndent(z, " ", " ")
     if err != nil {
         return err
     }
-    return file.WriteFile(b, z.AlertFile)
+    return file.WriteFile(b, z.State.File)
 }
 
-func (z Zfs) ReadStateFile() (Zfs, error) {
-    newZfs := Zfs{}
+func (z *Zfs) ReadStateFile() (Zfs, error) {
+    z.State.lock.Lock()
+    defer z.State.lock.Unlock()
 
-    b, err := file.ReadFile(z.AlertFile)
+    b, err := file.ReadFile(z.State.File)
     if err != nil {
         return newZfs, err
     }
 
+    newZfs := Zfs{}
     err = json.Unmarshal(b, &newZfs)
     return newZfs, err
 }

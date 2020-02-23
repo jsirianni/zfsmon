@@ -2,6 +2,7 @@ package zfs
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/jsirianni/zfsmon/zpool"
 	"github.com/jsirianni/zfsmon/util/alert"
@@ -14,7 +15,12 @@ import (
 type Zfs struct {
 	HookURL      string
 	SlackChannel string
-	AlertFile    string
+
+	State struct {
+		File string
+		lock sync.Mutex
+	}
+
 	NoAlert      bool
 
 	JSONOutput  bool

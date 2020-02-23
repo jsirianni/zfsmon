@@ -13,7 +13,7 @@ import (
 
 var hookURL string
 var slackChannel string
-var alertFile string
+var stateFile string
 var noAlert bool
 var jsonFmt bool
 
@@ -42,7 +42,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&slackChannel, "channel", "", "slack channel")
 	rootCmd.PersistentFlags().StringVar(&hookURL, "url", "", "hook url")
-	rootCmd.PersistentFlags().StringVar(&alertFile, "alert-file", "/tmp/zfsmon", "hook url")
+	rootCmd.PersistentFlags().StringVar(&stateFile, "state-file", "/tmp/zfsmon", "path for the state file")
 	rootCmd.PersistentFlags().BoolVar(&noAlert, "no-alert", false, "do not send alerts")
 	rootCmd.PersistentFlags().BoolVar(&jsonFmt, "json", false, "enable json output")
 }
@@ -53,13 +53,13 @@ func initConfig() {
 		os.Exit(1)
 	}
 
-	z = zfs.Zfs{
-		HookURL:      hookURL,
-		SlackChannel: slackChannel,
-		NoAlert:      noAlert,
-		AlertFile:    alertFile,
-		JSONOutput:   jsonFmt,
-	}
+	z = zfs.Zfs{}
+	z.HookURL = hookURL
+	z.SlackChannel = slackChannel
+	z.NoAlert = noAlert
+	z.State.File = stateFile
+	z.JSONOutput = jsonFmt
+
 }
 
 func checkFlags() error {
