@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/jsirianni/zfsmon/util/alert"
-	"github.com/jsirianni/zfsmon/util/file"
 
 	multierror "github.com/hashicorp/go-multierror"
 	libzfs "github.com/jsirianni/go-libzfs"
@@ -24,9 +23,11 @@ type Zfs struct {
 
 // ZFSMon builds an array of zpool objects and performs health checks on them
 func (z *Zfs) ZFSMon() error {
-	var err error
-	z.Pools, err = MakeSystemReport()
+	/*z.Pools, err = ReadLiveState()
 	if err != nil {
+		return err
+	}*/
+	if err := z.ReadState(); err != nil {
 		return err
 	}
 
@@ -36,50 +37,26 @@ func (z *Zfs) ZFSMon() error {
 		}
 	}
 
-	//return z.checkPools(zpools)
 	return z.checkPools()
 }
 
 // checkPools takes an array of zpool objects and sends alert to slack for
 // every pool that is in a bad state
-func (z Zfs) checkPools() error {
-	// all errors will be collected with 'go-multierror' and returned at the
-	// end of this function
-	var e error
-
+func (z Zfs) checkPools() (e error) {
 	for _, p := range z.Pools {
-
-		// if zpool is not healthy, send an alert and write the pool name to
-		// the alert file
 		if p.State != libzfs.VDevStateHealthy {
-			p.Print(z.JSONOutput)
-			if file.PoolAlerted(p.Name, z.AlertFile) == true {
-				fmt.Println(p.Name, "already alerted")
-			} else {
-				err := z.sendAlert(p)
-				if err != nil {
+			if p.Alerted == false {
+				if err := z.sendAlert(p, false); err != nil {
 					e = multierror.Append(e, err)
-				} else {
-					err := file.ManageFile(p.Name, 0, z.AlertFile)
-					if err != nil {
-						e = multierror.Append(e, err)
-					}
 				}
 			}
+			continue
+		}
 
-			// if zpool is healthy, check to see if the pool exists in the alert file.
-			// If it does, send an alert notifying that the pool is now healthy and
-			// then remove the pool from the alert file
-		} else {
-			if file.PoolAlerted(p.Name, z.AlertFile) == true {
-				err := z.sendAlert(p)
-				if err != nil {
+		if p.State == libzfs.VDevStateHealthy {
+			if p.Alerted == true {
+				if err := z.sendAlert(p, true); err != nil {
 					e = multierror.Append(e, err)
-				} else {
-					err := file.ManageFile(p.Name, 1, z.AlertFile)
-					if err != nil {
-						e = multierror.Append(e, err)
-					}
 				}
 			}
 		}
@@ -90,8 +67,14 @@ func (z Zfs) checkPools() error {
 
 // sendAlert sends a slack alert for a specific zpool, returns nil if z.NoAlert
 // is set to true
-func (z Zfs) sendAlert(pool Zpool) error {
+func (z Zfs) sendAlert(pool Zpool, healthy bool) error {
+	msg := "zpool " + pool.Name + " is not in a healthy state, got: " + pool.State.String()
+	if healthy {
+		msg = "zpool " + pool.Name + " is back to a healthy state, got: " + pool.State.String()
+	}
+
 	if z.NoAlert == true {
+		fmt.Println(msg)
 		fmt.Println("skipping alert, --no-alert passed.")
 		return nil
 	}

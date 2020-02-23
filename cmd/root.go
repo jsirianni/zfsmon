@@ -26,9 +26,10 @@ var rootCmd = &cobra.Command{
 		if err := z.ZFSMon(); err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
-		} else {
-			os.Exit(0)
 		}
+
+		z.SaveStateFile()
+		os.Exit(0)
 	},
 }
 
