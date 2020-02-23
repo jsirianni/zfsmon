@@ -63,12 +63,12 @@ func (z *Zfs) ReadStateFile() (Zfs, error) {
     z.State.lock.Lock()
     defer z.State.lock.Unlock()
 
+    newZfs := Zfs{}
     b, err := file.ReadFile(z.State.File)
     if err != nil {
         return newZfs, err
     }
 
-    newZfs := Zfs{}
     err = json.Unmarshal(b, &newZfs)
     return newZfs, err
 }
