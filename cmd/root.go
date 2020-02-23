@@ -27,8 +27,6 @@ var rootCmd = &cobra.Command{
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-
-		z.SaveStateFile()
 		os.Exit(0)
 	},
 }

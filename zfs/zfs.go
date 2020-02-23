@@ -23,10 +23,6 @@ type Zfs struct {
 
 // ZFSMon builds an array of zpool objects and performs health checks on them
 func (z *Zfs) ZFSMon() error {
-	/*z.Pools, err = ReadLiveState()
-	if err != nil {
-		return err
-	}*/
 	if err := z.ReadState(); err != nil {
 		return err
 	}
@@ -37,17 +33,23 @@ func (z *Zfs) ZFSMon() error {
 		}
 	}
 
-	return z.checkPools()
+	if err := z.checkPools(); err != nil {
+		return err
+	}
+
+	return z.SaveStateFile()
 }
 
 // checkPools takes an array of zpool objects and sends alert to slack for
 // every pool that is in a bad state
-func (z Zfs) checkPools() (e error) {
-	for _, p := range z.Pools {
+func (z *Zfs) checkPools() (e error) {
+	for i, p := range z.Pools {
 		if p.State != libzfs.VDevStateHealthy {
 			if p.Alerted == false {
 				if err := z.sendAlert(p, false); err != nil {
 					e = multierror.Append(e, err)
+				} else {
+					z.Pools[i].Alerted = true
 				}
 			}
 			continue
@@ -57,8 +59,11 @@ func (z Zfs) checkPools() (e error) {
 			if p.Alerted == true {
 				if err := z.sendAlert(p, true); err != nil {
 					e = multierror.Append(e, err)
+				} else {
+					z.Pools[i].Alerted = false
 				}
 			}
+			continue
 		}
 	}
 
