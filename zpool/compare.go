@@ -5,11 +5,6 @@ func ComparePools(a, b []Zpool) (bool, error) {
         return false, nil
     }
 
-    // return early if number of pools is zero
-    if len(a) == 0 {
-        return true, nil
-    }
-
     for i, _ := range a {
         x, err := ComparePool(a[i], b[i])
         if err != nil {
@@ -34,11 +29,6 @@ func ComparePool(a, b Zpool) (bool, error) {
 func CompareDevices(a, b []Device) (bool, error) {
     if len(a) != len(b) {
         return false, nil
-    }
-
-    // return early if number of devices is zero
-    if len(a) == 0 {
-        return true, nil
     }
 
     for i, _ := range a {
@@ -66,11 +56,6 @@ func CompareDevice(a, b Device) (bool, error) {
     // return if number of sub devices is not eqaul
     if len(a.Devices) != len(b.Devices) {
         return false, nil
-    }
-
-    // return early if number of sub devices is zero
-    if len(a.Devices) == 0 {
-        return true, nil
     }
 
     // we blindly assume that the index will work for both
