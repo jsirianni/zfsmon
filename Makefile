@@ -9,7 +9,7 @@ WORK_DIR := $(shell pwd)
 $(shell mkdir -p artifacts)
 
 build: build-zfs-7
-
+	
 build-zfs-7: clean
 	$(info building zfsmon ${VERSION})
 
@@ -25,6 +25,8 @@ build-zfs-7: clean
 		docker cp ${UNIXTIME}:/zfsmon/go.mod go.mod.zfs.7 && \
 		docker cp ${UNIXTIME}:/zfsmon/go.sum go.sum.zfs.7 && \
 		docker rm -fv ${UNIXTIME}
+
+	$(shell rm -f go.mod go.sum)
 
 test:
 	go test ./...
