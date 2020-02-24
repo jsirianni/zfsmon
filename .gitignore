@@ -15,3 +15,5 @@ zfsmon
 zfsmon.zip
 *.SHA256SUMS
 *.zip
+go.mod
+go.sum
