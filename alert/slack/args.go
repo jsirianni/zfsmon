@@ -9,6 +9,13 @@ import (
 )
 
 func (slack Slack) validateArgs(message string) error {
+    if slackDebug {
+        fmt.Println("validating slack configuration")
+        fmt.Println("slack webhook url:", slack.HookURL)
+        fmt.Println("slack channel:", slack.Channel)
+        fmt.Println("slack message:", message)
+    }
+
 	if slack.HookURL == "" {
 		return errors.New("slack webhook url is blank")
 	}
@@ -25,7 +32,7 @@ func (slack Slack) validateArgs(message string) error {
 		return errors.New("message is blank")
 	}
 
-    if slackDebug == true {
+    if slackDebug {
         fmt.Println("slack configuration validation passed")
     }
 

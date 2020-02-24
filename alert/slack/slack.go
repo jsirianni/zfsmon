@@ -4,6 +4,7 @@ import (
 	"os"
 	"fmt"
 	"bytes"
+	"io/ioutil"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -19,7 +20,7 @@ type Slack struct {
 	Channel string
 }
 
-type Payload struct {
+type payload struct {
 	Channel string `json:"channel"`
 	Text    string `json:"text"`
 }
@@ -33,6 +34,9 @@ func (slack Slack) Message(message string) error {
 	// set debug, ignore parse errors
 	x := os.Getenv(envSlackDebug)
 	slackDebug, _ = strconv.ParseBool(x)
+ 	if slackDebug {
+		fmt.Println("slack debug enabled")
+	}
 
 	if err := slack.validateArgs(message); err != nil {
 		return errors.Wrap(err, "slack configuration failed validation")
@@ -42,12 +46,7 @@ func (slack Slack) Message(message string) error {
 }
 
 func (slack Slack) sendPayload(m string) error {
-	payload := Payload{
-		Channel: slack.Channel,
-		Text:    m,
-	}
-
-	p, err := json.Marshal(payload)
+	p, err := json.Marshal(payload{Channel:slack.Channel,Text:m,})
 	if err != nil {
 		return nil
 	}
@@ -69,8 +68,13 @@ func (slack Slack) sendPayload(m string) error {
 		return err
 	}
 
+
 	if resp.StatusCode != 200 {
-		return errors.New("Slack returned status: " + strconv.Itoa(resp.StatusCode))
+		b, _ := ioutil.ReadAll(resp.Body)
+		if b == nil {
+			b = []byte("")
+		}
+		return errors.New("Slack returned status: " + strconv.Itoa(resp.StatusCode) + " " + string(b))
 	}
 	return nil
 }
