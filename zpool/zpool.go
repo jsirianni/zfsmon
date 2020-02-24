@@ -9,19 +9,19 @@ import (
 )
 
 type Zpool struct {
-	Name    string
-	State   libzfs.VDevState
-	Devices []Device
+	Name    string `json:"name"`
+	State   libzfs.VDevState `json:"state"`
+	Devices []Device `json:"devices"`
 
 	// set to true when an alert is triggered
 	// for this pool
-	Alerted bool
+	Alerted bool `json:"alerted"`
 }
 
 type Device struct {
-	Name    string
-	Type    libzfs.VDevType
-	State   libzfs.VDevState
+	Name    string `json:"name"`
+	Type    libzfs.VDevType `json:"type"`
+	State   libzfs.VDevState `json:"state"`
 	Devices []Device `json:",omitempty"`
 }
 

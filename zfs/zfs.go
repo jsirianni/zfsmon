@@ -9,29 +9,29 @@ import (
 
 	multierror "github.com/hashicorp/go-multierror"
 	libzfs "github.com/jsirianni/go-libzfs"
+	"github.com/pkg/errors"
 )
 
 // Zfs type holds the global configuration for the zfs package
 type Zfs struct {
-	HookURL      string
-	SlackChannel string
+	Hostname string `json:"-"`
 
 	State struct {
-		File string
-		lock sync.Mutex
-	}
+		File string `json:"-"`
+		lock sync.Mutex `json:"-"`
+	} `json:"-"`
 
-	JSONOutput bool
+	JSONOutput bool `json:"-"`
 
-	Pools []zpool.Zpool
+	Pools []zpool.Zpool `json:"pools,omitempty"`
 
 	// Alert is a pluggable interface that
 	// can accept different systems for notifying
 	// users. See alert/alert.go
-	Alert       alert.Alert
+	Alert       alert.Alert `json:"-"`
 	AlertConfig struct {
-		NoAlert bool
-	}
+		NoAlert bool `json:"-"`
+	} `json:"-"`
 }
 
 // ZFSMon builds an array of zpool objects and performs health checks on them
@@ -84,9 +84,9 @@ func (z Zfs) checkPools() (e error) {
 }
 
 func (z Zfs) sendAlert(pool zpool.Zpool, healthy bool) error {
-	msg := "zpool " + pool.Name + " is not in a healthy state, got: " + pool.State.String()
+	msg := "host: " + z.Hostname + ": zpool " + pool.Name + " is not in a healthy state, got: " + pool.State.String()
 	if healthy {
-		msg = "zpool " + pool.Name + " is back to a healthy state, got: " + pool.State.String()
+		msg = "host: " + z.Hostname + ": zpool " + pool.Name + " is back to a healthy state, got: " + pool.State.String()
 	}
 
 	if z.AlertConfig.NoAlert == true {
@@ -94,5 +94,9 @@ func (z Zfs) sendAlert(pool zpool.Zpool, healthy bool) error {
 		fmt.Println("skipping alert, --no-alert passed.")
 		return nil
 	}
-	return z.Alert.Message(msg)
+
+	if err := z.Alert.Message(msg); err != nil {
+		return errors.Wrap(err, "failed to send alert")
+	}
+	return nil
 }

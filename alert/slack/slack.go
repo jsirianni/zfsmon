@@ -1,36 +1,59 @@
 package slack
 
 import (
+	"os"
+	"fmt"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
+
+	"github.com/pkg/errors"
 )
+
+const envSlackDebug = "SLACK_DEBUG"
+var slackDebug = false
 
 type Slack struct {
 	HookURL string
 	Channel string
 }
 
-type payload struct {
-	channel string `json:"channel"`
-	text    string `json:"text"`
+type Payload struct {
+	Channel string `json:"channel"`
+	Text    string `json:"text"`
+}
+
+func (slack Slack) Print() {
+	fmt.Println("slack hook url:", slack.HookURL)
+	fmt.Println("slack channel:", slack.Channel)
 }
 
 func (slack Slack) Message(message string) error {
+	// set debug, ignore parse errors
+	x := os.Getenv(envSlackDebug)
+	slackDebug, _ = strconv.ParseBool(x)
+
+	if err := slack.validateArgs(message); err != nil {
+		return errors.Wrap(err, "slack configuration failed validation")
+	}
+
 	return slack.sendPayload(message)
 }
 
 func (slack Slack) sendPayload(m string) error {
-	payload := payload{
-		channel: slack.Channel,
-		text:    m,
+	payload := Payload{
+		Channel: slack.Channel,
+		Text:    m,
 	}
 
 	p, err := json.Marshal(payload)
 	if err != nil {
 		return nil
+	}
+
+	if slackDebug {
+		fmt.Println("slack payload: " + string(p))
 	}
 
 	req, err := http.NewRequest("POST", slack.HookURL, bytes.NewBuffer(p))

@@ -65,6 +65,12 @@ func initConfig() {
 	z.JSONOutput = jsonFmt
 	z.AlertConfig.NoAlert = noAlert
 	z.Alert = slack.Slack{hookURL, slackChannel}
+
+	var err error
+	z.Hostname, err = os.Hostname()
+	if err != nil {
+		z.Hostname = "could_not_detect_hostname_sorry"
+	}
 }
 
 func checkFlags() error {
