@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/jsirianni/zfsmon/zfs"
-	"github.com/jsirianni/zfsmon/alert"
+	"github.com/jsirianni/zfsmon/alert/slack"
 
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
@@ -64,7 +64,7 @@ func initConfig() {
 	z.State.File = stateFile
 	z.JSONOutput = jsonFmt
 	z.AlertConfig.NoAlert = noAlert
-	z.Alert = alert.Slack{hookURL, slackChannel}
+	z.Alert = slack.Slack{hookURL, slackChannel}
 }
 
 func checkFlags() error {
