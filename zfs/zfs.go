@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/jsirianni/zfsmon/zpool"
 	"github.com/jsirianni/zfsmon/alert"
+	"github.com/jsirianni/zfsmon/zpool"
 
 	multierror "github.com/hashicorp/go-multierror"
 	libzfs "github.com/jsirianni/go-libzfs"
@@ -21,14 +21,14 @@ type Zfs struct {
 		lock sync.Mutex
 	}
 
-	JSONOutput  bool
+	JSONOutput bool
 
 	Pools []zpool.Zpool
 
 	// Alert is a pluggable interface that
 	// can accept different systems for notifying
 	// users. See alert/alert.go
-	Alert alert.Alert
+	Alert       alert.Alert
 	AlertConfig struct {
 		NoAlert bool
 	}

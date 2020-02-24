@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jsirianni/zfsmon/zfs"
 	"github.com/jsirianni/zfsmon/alert/slack"
+	"github.com/jsirianni/zfsmon/zfs"
 
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"

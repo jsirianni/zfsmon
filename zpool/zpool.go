@@ -1,8 +1,8 @@
 package zpool
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 
 	libzfs "github.com/jsirianni/go-libzfs"
 	"github.com/pkg/errors"

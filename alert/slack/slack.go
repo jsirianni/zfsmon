@@ -25,7 +25,7 @@ func (slack Slack) Message(message string) error {
 func (slack Slack) sendPayload(m string) error {
 	payload := payload{
 		channel: slack.Channel,
-		text: m,
+		text:    m,
 	}
 
 	p, err := json.Marshal(payload)

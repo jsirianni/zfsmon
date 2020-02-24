@@ -1,8 +1,8 @@
 package file
 
 import (
-	"os"
 	"io/ioutil"
+	"os"
 )
 
 // Write the json content to a given path, readable only by
@@ -15,7 +15,7 @@ func WriteFile(content []byte, filePath string) error {
 func ReadFile(filePath string) ([]byte, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
-	    return nil, err
+		return nil, err
 	}
 	defer f.Close()
 	return ioutil.ReadAll(f)
