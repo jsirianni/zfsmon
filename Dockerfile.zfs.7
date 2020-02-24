@@ -15,8 +15,8 @@ RUN apt-get install -y \
     zip \
 	git \
     gcc \
-	zfsutils-linux \
-	libzfslinux-dev
+	zfsutils-linux=0.7.5-1ubuntu16.8 \
+	libzfslinux-dev=0.7.5-1ubuntu16.8
 
 WORKDIR /zfsmon
 COPY . .
