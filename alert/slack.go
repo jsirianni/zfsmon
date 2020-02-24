@@ -10,25 +10,30 @@ import (
 
 type Slack struct {
 	HookURL string
-	Post    SlackPost
+	Channel string
 }
 
-type SlackPost struct {
-	Channel string `json:"channel"`
-	Text    string `json:"text"`
+type payload struct {
+	channel string `json:"channel"`
+	text    string `json:"text"`
 }
 
-func (slack *Slack) BasicMessage() error {
-	return slack.sendPayload()
+func (slack Slack) Message(message string) error {
+	return slack.sendPayload(message)
 }
 
-func (slack *Slack) sendPayload() error {
-	payload, err := json.Marshal(slack.Post)
+func (slack Slack) sendPayload(m string) error {
+	payload := payload{
+		channel: slack.Channel,
+		text: m,
+	}
+
+	p, err := json.Marshal(payload)
 	if err != nil {
 		return nil
 	}
 
-	req, err := http.NewRequest("POST", slack.HookURL, bytes.NewBuffer(payload))
+	req, err := http.NewRequest("POST", slack.HookURL, bytes.NewBuffer(p))
 	if err != nil {
 		return err
 	}

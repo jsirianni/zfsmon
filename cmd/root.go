@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/jsirianni/zfsmon/zfs"
+	"github.com/jsirianni/zfsmon/alert"
 
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
@@ -14,6 +15,7 @@ import (
 var hookURL string
 var slackChannel string
 var stateFile string
+var alertType string
 var noAlert bool
 var jsonFmt bool
 
@@ -40,11 +42,16 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
+	rootCmd.PersistentFlags().StringVar(&stateFile, "state-file", "/tmp/zfsmon", "path for the state file")
+	rootCmd.PersistentFlags().BoolVar(&jsonFmt, "json", false, "enable json output")
+
+	// alert flags
+	rootCmd.PersistentFlags().BoolVar(&noAlert, "no-alert", false, "do not send alerts")
+	rootCmd.PersistentFlags().StringVar(&alertType, "alert-type", "slack", "alert system to use")
+
+	// slack alert type
 	rootCmd.PersistentFlags().StringVar(&slackChannel, "channel", "", "slack channel")
 	rootCmd.PersistentFlags().StringVar(&hookURL, "url", "", "hook url")
-	rootCmd.PersistentFlags().StringVar(&stateFile, "state-file", "/tmp/zfsmon", "path for the state file")
-	rootCmd.PersistentFlags().BoolVar(&noAlert, "no-alert", false, "do not send alerts")
-	rootCmd.PersistentFlags().BoolVar(&jsonFmt, "json", false, "enable json output")
 }
 
 func initConfig() {
@@ -54,12 +61,10 @@ func initConfig() {
 	}
 
 	z = zfs.Zfs{}
-	z.HookURL = hookURL
-	z.SlackChannel = slackChannel
-	z.NoAlert = noAlert
 	z.State.File = stateFile
 	z.JSONOutput = jsonFmt
-
+	z.AlertConfig.NoAlert = noAlert
+	z.Alert = alert.Slack{hookURL, slackChannel}
 }
 
 func checkFlags() error {

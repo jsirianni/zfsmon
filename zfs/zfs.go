@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/jsirianni/zfsmon/zpool"
-	"github.com/jsirianni/zfsmon/util/alert"
+	"github.com/jsirianni/zfsmon/alert"
 
 	multierror "github.com/hashicorp/go-multierror"
 	libzfs "github.com/jsirianni/go-libzfs"
@@ -21,11 +21,15 @@ type Zfs struct {
 		lock sync.Mutex
 	}
 
-	NoAlert      bool
-
 	JSONOutput  bool
 
 	Pools []zpool.Zpool
+
+	AlertConfig struct {
+		NoAlert bool
+		Type    string
+	}
+	Alert alert.Alert
 }
 
 // ZFSMon builds an array of zpool objects and performs health checks on them
@@ -77,23 +81,36 @@ func (z Zfs) checkPools() (e error) {
 	return e
 }
 
-// sendAlert sends a slack alert for a specific zpool, returns nil if z.NoAlert
-// is set to true
+// sendAlert sends a slack alert for a specific zpool
+/*func (z Zfs) sendAlert(pool zpool.Zpool, healthy bool) error {
+	msg := "zpool " + pool.Name + " is not in a healthy state, got: " + pool.State.String()
+	if healthy {
+		msg = "zpool " + pool.Name + " is back to a healthy state, got: " + pool.State.String()
+	}
+
+	if z.AlertConfig.NoAlert == true {
+		fmt.Println(msg)
+		fmt.Println("skipping alert, --no-alert passed.")
+		return nil
+	}
+
+	var s alert.Slack
+	s.HookURL = z.HookURL
+	s.Channel = z.SlackChannel
+	s.AlertMessage = ("zpool " + pool.Name + " is not in a healthy state, got: " + string(pool.State.String()))
+	return s.Message()
+}*/
+
 func (z Zfs) sendAlert(pool zpool.Zpool, healthy bool) error {
 	msg := "zpool " + pool.Name + " is not in a healthy state, got: " + pool.State.String()
 	if healthy {
 		msg = "zpool " + pool.Name + " is back to a healthy state, got: " + pool.State.String()
 	}
 
-	if z.NoAlert == true {
+	if z.AlertConfig.NoAlert == true {
 		fmt.Println(msg)
 		fmt.Println("skipping alert, --no-alert passed.")
 		return nil
 	}
-
-	var a alert.Slack
-	a.HookURL = z.HookURL
-	a.Post.Channel = z.SlackChannel
-	a.Post.Text = ("zpool " + pool.Name + " is not in a healthy state, got: " + string(pool.State.String()))
-	return a.BasicMessage()
+	return z.Alert.Message(msg)
 }
