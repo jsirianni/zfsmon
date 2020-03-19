@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/jsirianni/zfsmon/alert"
-	"github.com/jsirianni/zfsmon/zpool"
 
 	multierror "github.com/hashicorp/go-multierror"
 	libzfs "github.com/jsirianni/go-libzfs"
@@ -25,7 +24,7 @@ type Zfs struct {
 		lock sync.Mutex `json:"-"`
 	} `json:"-"`
 
-	Pools []zpool.Zpool `json:"pools"`
+	Pools []Zpool `json:"pools"`
 
 	// Alert is a pluggable interface that
 	// can accept different systems for notifying
@@ -99,7 +98,7 @@ func (z Zfs) checkPools() (e error) {
 	return e
 }
 
-func (z Zfs) checkDevices(p zpool.Zpool) (e error) {
+func (z Zfs) checkDevices(p Zpool) (e error) {
 	for _, d := range p.Devices {
 		t := string(d.Type)
 		if ( t == "raidz" || t == "mirror" ) {
@@ -117,7 +116,7 @@ func (z Zfs) checkDevices(p zpool.Zpool) (e error) {
 	return e
 }
 
-func (z Zfs) checkDevice(p zpool.Zpool, d zpool.Device) error {
+func (z Zfs) checkDevice(p Zpool, d Device) error {
 	if z.Verbose {
 		log.Println("checking device in pool: " + p.Name + " " + d.Name + " " + d.State.String())
 	}
@@ -143,7 +142,7 @@ func (z Zfs) checkDevice(p zpool.Zpool, d zpool.Device) error {
 	return nil
 }
 
-func (z Zfs) sendAlert(pool zpool.Zpool, healthy bool) error {
+func (z Zfs) sendAlert(pool Zpool, healthy bool) error {
 	msg := "host: " + z.Hostname + ": zpool " + pool.Name + " is not in a healthy state, got status: " + pool.State.String()
 	if healthy {
 		msg = "host: " + z.Hostname + ": zpool " + pool.Name + " is back to a healthy state, got status: " + pool.State.String()

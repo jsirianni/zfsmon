@@ -1,4 +1,4 @@
-package zpool
+package zfs
 
 import (
 	libzfs "github.com/jsirianni/go-libzfs"

@@ -6,14 +6,13 @@ import (
 	"os"
 
 	"github.com/jsirianni/zfsmon/util/file"
-	"github.com/jsirianni/zfsmon/zpool"
 )
 
 func (z *Zfs) ReadState() error {
 	var err error
 	var lastSavedState Zfs
 
-	z.Pools, err = zpool.RunningPools()
+	z.Pools, err = RunningPools()
 	if err != nil {
 		return err
 	}
