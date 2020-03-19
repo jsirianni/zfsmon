@@ -18,6 +18,7 @@ var stateFile string
 var alertType string
 var noAlert bool
 var daemon bool
+var verbose bool
 
 var z zfs.Zfs
 
@@ -44,6 +45,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&stateFile, "state-file", "/tmp/zfsmon", "path for the state file")
 	rootCmd.PersistentFlags().BoolVar(&daemon, "daemon", false, "enable daemon mode")
+	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "enable verbose output")
 
 	// alert flags
 	rootCmd.PersistentFlags().BoolVar(&noAlert, "no-alert", false, "do not send alerts")
@@ -68,6 +70,7 @@ func initConfig() {
 
 func initFlags() error {
 	z.DaemonMode = daemon
+	z.Verbose    = verbose
 
 	if err := initSate(); err != nil {
 		return err

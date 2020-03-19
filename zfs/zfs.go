@@ -3,6 +3,7 @@ package zfs
 import (
 	"log"
 	"sync"
+	"time"
 
 	"github.com/jsirianni/zfsmon/alert"
 	"github.com/jsirianni/zfsmon/zpool"
@@ -17,6 +18,7 @@ type Zfs struct {
 	Hostname string `json:"-"`
 
 	DaemonMode bool `json:"-"`
+	Verbose    bool `json:"-"`
 
 	State struct {
 		File string `json:"-"`
@@ -58,6 +60,8 @@ func (z Zfs) ZFSMon() error {
 				}
 				log.Println(err)
 			}
+
+			time.Sleep(time.Second * time.Duration(10))
 		}
 	}
 
@@ -88,6 +92,10 @@ func (z Zfs) IsAlerted(name, state string) bool {
 func (z Zfs) checkPools() (e error) {
 	for poolIndex, p := range z.Pools {
 		for i, d := range p.Devices {
+			if z.Verbose {
+				log.Println(d.Name + ": " + d.State.String())
+			}
+
 			if d.State != libzfs.VDevStateHealthy {
 				if z.IsAlerted(d.Name, d.State.String()) == false {
 					if err := z.sendAlert(p, false); err != nil {
