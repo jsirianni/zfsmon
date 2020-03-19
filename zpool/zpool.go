@@ -3,6 +3,7 @@ package zpool
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	libzfs "github.com/jsirianni/go-libzfs"
 	"github.com/pkg/errors"
@@ -12,10 +13,6 @@ type Zpool struct {
 	Name    string `json:"name"`
 	State   libzfs.VDevState `json:"state"`
 	Devices []Device `json:"devices"`
-
-	// set to true when an alert is triggered
-	// for this pool
-	Alerted bool `json:"alerted"`
 }
 
 type Device struct {
@@ -23,6 +20,26 @@ type Device struct {
 	Type    libzfs.VDevType `json:"type"`
 	State   libzfs.VDevState `json:"state"`
 	Devices []Device `json:",omitempty"`
+}
+
+// Devices returns a slice of device names for a given pool
+// sorted by name
+func (z Zpool) SortedDevices() []string {
+	d := []string{}
+	for i := range z.Devices {
+		d = append(d, z.Devices[i].Name)
+	}
+	sort.Sort(sort.StringSlice(d))
+	return d
+}
+
+func (d Device) SortedDevices() []string {
+	dv := []string{}
+	for i := range d.Devices {
+		dv = append(dv, d.Devices[i].Name)
+	}
+	sort.Sort(sort.StringSlice(dv))
+	return dv
 }
 
 // Print a Device object in json or standard output
