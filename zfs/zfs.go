@@ -55,9 +55,10 @@ func (z Zfs) ZFSMon() error {
 	if z.DaemonMode {
 		for {
 			if err := z.checkPools(); err != nil {
-				if e := z.SaveStateFile(); e != nil {
-					log.Println(errors.Wrap(err, e.Error()))
-				}
+				log.Println(err)
+			}
+
+			if err := z.SaveStateFile(); err != nil {
 				log.Println(err)
 			}
 
