@@ -91,41 +91,56 @@ func (z Zfs) IsAlerted(name, state string) bool {
 // checkPools takes an array of zpool objects and sends alert to slack for
 // every pool that is in a bad state
 func (z Zfs) checkPools() (e error) {
-	for poolIndex, p := range z.Pools {
-		for i, d := range p.Devices {
-			if z.Verbose {
-				log.Println(d.Name + ": " + d.State.String())
-			}
+	for _, p := range z.Pools {
+		if err := z.checkDevices(p); err != nil {
+			e = multierror.Append(e, err)
+		}
+	}
+	return e
+}
 
-			if d.State != libzfs.VDevStateHealthy {
-				if z.IsAlerted(d.Name, d.State.String()) == false {
-					if err := z.sendAlert(p, false); err != nil {
-						e = multierror.Append(e, err)
-					} else {
-						dev := z.Pools[poolIndex].Devices[i]
-						z.AlertState[dev.Name] = dev.State.String()
-					}
+func (z Zfs) checkDevices(p zpool.Zpool) (e error) {
+	for _, d := range p.Devices {
+		t := string(d.Type)
+		if ( t == "raidz" || t == "mirror" ) {
+			for _, d := range d.Devices {
+				if err := z.checkDevice(p, d); err != nil {
+					e = multierror.Append(e, err)
 				}
-				continue
 			}
-
-			if d.State == libzfs.VDevStateHealthy {
-				if z.IsAlerted(d.Name, d.State.String()) {
-					if err := z.sendAlert(p, true); err != nil {
-						e = multierror.Append(e, err)
-					} else {
-						dev := z.Pools[poolIndex].Devices[i]
-						_, ok := z.AlertState[dev.Name]
-						if ok {
-							delete(z.AlertState, dev.Name)
-						}
-					}
-				}
-				continue
+		} else {
+			if err := z.checkDevice(p, d); err != nil {
+				e = multierror.Append(e, err)
 			}
 		}
 	}
 	return e
+}
+
+func (z Zfs) checkDevice(p zpool.Zpool, d zpool.Device) error {
+	if z.Verbose {
+		log.Println("checking device in pool: " + p.Name + " " + d.Name + " " + d.State.String())
+	}
+
+	if d.State == libzfs.VDevStateHealthy {
+		if z.IsAlerted(d.Name, d.State.String()) {
+			if err := z.sendAlert(p, true); err != nil {
+				return err
+			}
+			// assume the key exists because z.IsAlerted returned true
+			delete(z.AlertState, d.Name)
+		}
+		return nil
+	}
+
+	// if not healthy, if not alerted, send alert else return
+	if z.IsAlerted(d.Name, d.State.String()) == false {
+		if err := z.sendAlert(p, false); err != nil {
+			return err
+		}
+		z.AlertState[d.Name] = d.State.String()
+	}
+	return nil
 }
 
 func (z Zfs) sendAlert(pool zpool.Zpool, healthy bool) error {
