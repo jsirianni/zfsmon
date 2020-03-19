@@ -1,8 +1,11 @@
 # zfsmon
 
-`zfsmon` is a utility that sends slack alerts when a zpool becomes degraded.
+`zfsmon` is a utility that sends alerts when a zpool becomes degraded.
 
 ## usage
+
+***TODO***: The usage section is out of date.
+
 Available flags:
 `zfsmon --help`
 ```
@@ -41,26 +44,17 @@ zfsmon should be run with `sudo` or with root. Recent versions of ZFSonLinux
 do not require root for basic read only operations, however, zfsmon has not been tested
 this way.
 
-## install
-An install script is provided. It will place the binary in your path and setup
-a five minute cronjob. Pass a channel and hookurl as arguments
-```
-./deploy.sh <channel> <hookurl>
-```
+## Install
 
+Download the latest release and place it in your path
 
-## developing
-***docker***
-zfsmon requires several dependencies that are only available on Linux.
-A docker image is provided to allow for cross platform development. Run the wrapper
-script to build and export the binary to your working directory:
-```
-sudo ./build_docker.sh
-```
+## Build
 
-`build_docker.sh` will not cleanup zfsmon images. To cleanup leftover images:
+The Makefile will use Docker to build the binary, this is to allow developing
+zfsmon on platforms that do not support OpenZFS. The build binary can be found
+in `artifacts/`
 ```
-sudo docker images | grep zfsmon | awk '{print $3}' | xargs -n1 sudo docker rmi
+make
 ```
 
 ***build manually***
@@ -80,5 +74,5 @@ go get github.com/jsirianni/go-libzfs
 
 build the binary
 ```
-go build
+go build -o zfsmon
 ```
