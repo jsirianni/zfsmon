@@ -17,7 +17,7 @@ var slackChannel string
 var stateFile string
 var alertType string
 var noAlert bool
-var jsonFmt bool
+var daemon bool
 
 var z zfs.Zfs
 
@@ -43,6 +43,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&stateFile, "state-file", "/tmp/zfsmon", "path for the state file")
+	rootCmd.PersistentFlags().BoolVar(&daemon, "daemon", false, "enable daemon mode")
 
 	// alert flags
 	rootCmd.PersistentFlags().BoolVar(&noAlert, "no-alert", false, "do not send alerts")
@@ -66,6 +67,8 @@ func initConfig() {
 }
 
 func initFlags() error {
+	z.DaemonMode = daemon
+
 	if err := initSate(); err != nil {
 		return err
 	}

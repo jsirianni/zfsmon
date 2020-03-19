@@ -16,6 +16,8 @@ import (
 type Zfs struct {
 	Hostname string `json:"-"`
 
+	DaemonMode bool `json:"-"`
+
 	State struct {
 		File string `json:"-"`
 		lock sync.Mutex `json:"-"`
@@ -46,6 +48,17 @@ func (z *Zfs) Init() error {
 func (z Zfs) ZFSMon() error {
 	if err := z.ReadState(); err != nil {
 		return err
+	}
+
+	if z.DaemonMode {
+		for {
+			if err := z.checkPools(); err != nil {
+				if e := z.SaveStateFile(); e != nil {
+					log.Println(errors.Wrap(err, e.Error()))
+				}
+				log.Println(err)
+			}
+		}
 	}
 
 	if err := z.checkPools(); err != nil {
@@ -112,13 +125,16 @@ func (z Zfs) sendAlert(pool zpool.Zpool, healthy bool) error {
 		msg = "host: " + z.Hostname + ": zpool " + pool.Name + " is back to a healthy state, got status: " + pool.State.String()
 	}
 
+	if z.DaemonMode {
+		log.Println(msg)
+	}
+
 	if z.AlertConfig.NoAlert == true {
 		log.Println("skipping alert, --no-alert passed.")
 		return nil
 	}
 
 	if err := z.Alert.Message(msg); err != nil {
-		log.Println("DEBUG: SLACK ERROR: " + err.Error())
 		return errors.Wrap(err, "failed to send alert")
 	}
 	return nil
