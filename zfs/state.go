@@ -24,27 +24,7 @@ func (z *Zfs) ReadState() error {
 		return nil
 	}
 
-	s := false
-	s, err = zpool.ComparePools(z.Pools, lastSavedState.Pools)
-	if err != nil {
-		return err
-	}
-	if s == false {
-		fmt.Println("last saved state file has different pools than the running system, ignoring the state and not merging old alert status")
-		return nil
-	}
-
-	// merge alert status from last known state to the running configuration
-	// to prevent re-alerting
-	for _, lastSavedStatePool := range lastSavedState.Pools {
-		for i, pool := range z.Pools {
-			if lastSavedStatePool.Name == pool.Name {
-				z.Pools[i].Alerted = lastSavedStatePool.Alerted
-			}
-		}
-
-	}
-
+	z.AlertState = lastSavedState.AlertState
 	return nil
 }
 
@@ -66,6 +46,7 @@ func (z *Zfs) ReadStateFile() (Zfs, error) {
 	newZfs := Zfs{}
 	b, err := file.ReadFile(z.State.File)
 	if err != nil {
+		// TODO check for file open error
 		return newZfs, err
 	}
 
