@@ -19,7 +19,7 @@ func (z Zfs) isAlerted(name, state string) bool {
 }
 
 func (z Zfs) sendAlert(pool Zpool, healthy bool) error {
-	msg := "host: " + z.Hostname + ": zpool " + pool.Name + " is not in a healthy state, got status: " + pool.State.String()
+	msg := "host: " + z.Hostname + " | zpool " + pool.Name + " is not in a healthy state, got status: " + pool.State.String()
 	if healthy {
 		msg = "host: " + z.Hostname + ": zpool " + pool.Name + " is back to a healthy state, got status: " + pool.State.String()
 	}
