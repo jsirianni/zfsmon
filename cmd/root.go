@@ -43,7 +43,6 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&stateFile, "state-file", "/tmp/zfsmon", "path for the state file")
-	rootCmd.PersistentFlags().BoolVar(&jsonFmt, "json", false, "enable json output")
 
 	// alert flags
 	rootCmd.PersistentFlags().BoolVar(&noAlert, "no-alert", false, "do not send alerts")
@@ -70,9 +69,6 @@ func initFlags() error {
 	if err := initSate(); err != nil {
 		return err
 	}
-	if err := initOutput(); err != nil {
-		return err
-	}
 	if err := initAlert(); err != nil {
 		return err
 	}
@@ -84,11 +80,6 @@ func initFlags() error {
 
 func initSate() error {
 	z.State.File = stateFile
-	return nil
-}
-
-func initOutput() error {
-	z.JSONOutput = jsonFmt
 	return nil
 }
 

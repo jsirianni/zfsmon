@@ -21,8 +21,6 @@ type Zfs struct {
 		lock sync.Mutex `json:"-"`
 	} `json:"-"`
 
-	JSONOutput bool `json:"-"`
-
 	Pools []zpool.Zpool `json:"pools"`
 
 	// Alert is a pluggable interface that
