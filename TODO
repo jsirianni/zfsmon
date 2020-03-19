@@ -1,0 +1,2 @@
+- check devices in mirrors and raidz (maybe check "if device type is x, then y")
+- implement standardized logging:  https://www.ardanlabs.com/blog/2013/11/using-log-package-in-go.html
