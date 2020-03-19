@@ -13,6 +13,6 @@ func (t Terminal) Print() {
 }
 
 func (t Terminal) Message(message string) error {
-    fmt.Println("ZFSMON ALERT:", message)
+    fmt.Println(message)
     return nil
 }
