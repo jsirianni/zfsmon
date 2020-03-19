@@ -1,10 +1,6 @@
 package zpool
 
 import (
-	"encoding/json"
-	"fmt"
-	"sort"
-
 	libzfs "github.com/jsirianni/go-libzfs"
 	"github.com/pkg/errors"
 )
@@ -20,68 +16,6 @@ type Device struct {
 	Type    libzfs.VDevType `json:"type"`
 	State   libzfs.VDevState `json:"state"`
 	Devices []Device `json:",omitempty"`
-}
-
-// Devices returns a slice of device names for a given pool
-// sorted by name
-func (z Zpool) SortedDevices() []string {
-	d := []string{}
-	for i := range z.Devices {
-		d = append(d, z.Devices[i].Name)
-	}
-	sort.Sort(sort.StringSlice(d))
-	return d
-}
-
-func (d Device) SortedDevices() []string {
-	dv := []string{}
-	for i := range d.Devices {
-		dv = append(dv, d.Devices[i].Name)
-	}
-	sort.Sort(sort.StringSlice(dv))
-	return dv
-}
-
-// Print a Device object in json or standard output
-func (device Device) Print(jsonFmt bool) error {
-	if jsonFmt {
-		b, err := json.MarshalIndent(device, " ", " ")
-		if err != nil {
-			return errors.Wrap(err, "failed to marshal Device object for printing in json format")
-		}
-		fmt.Println(string(b))
-		return nil
-	}
-
-	fmt.Println("device:", device.Name, device.Type, device.State.String())
-	for _, d := range device.Devices {
-		fmt.Println("vdev:", d.Name, d.Type, d.State.String())
-		for _, s := range d.Devices {
-			fmt.Println("vdev:", s.Name, s.Type, s.State.String())
-		}
-	}
-	return nil
-}
-
-// Print a Zpool object in json or standard output
-func (zpool Zpool) Print(jsonFmt bool) error {
-	if jsonFmt {
-		b, err := json.MarshalIndent(zpool, " ", " ")
-		if err != nil {
-			return errors.Wrap(err, "failed to marshal Zpool object for printing in json format")
-		}
-		fmt.Println(string(b))
-		return nil
-	}
-
-	fmt.Println("zpool:", zpool.Name, zpool.State.String())
-	for _, d := range zpool.Devices {
-		fmt.Println("vdev:", d.Name, d.Type, d.State.String())
-		for _, s := range d.Devices {
-			fmt.Println("vdev:", s.Name, s.Type, s.State.String())
-		}
-	}
-	return nil
 }
 
 // RunningPools returns a slice of Zpool objects that are detected
