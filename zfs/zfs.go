@@ -7,8 +7,6 @@ import (
 
 	"github.com/jsirianni/zfsmon/alert"
 
-	multierror "github.com/hashicorp/go-multierror"
-	libzfs "github.com/jsirianni/go-libzfs"
 	"github.com/pkg/errors"
 )
 
@@ -73,92 +71,4 @@ func (z Zfs) ZFSMon() error {
 	}
 
 	return z.SaveStateFile()
-}
-
-// IsAlerted returns true if device name is found in the alert state
-func (z Zfs) IsAlerted(name, state string) bool {
-	s, ok := z.AlertState[name]
-	if ok {
-		// return false if the state has changed
-		if state != s {
-			return false
-		}
-	}
-	return ok
-}
-
-// checkPools takes an array of zpool objects and sends alert to slack for
-// every pool that is in a bad state
-func (z Zfs) checkPools() (e error) {
-	for _, p := range z.Pools {
-		if err := z.checkDevices(p); err != nil {
-			e = multierror.Append(e, err)
-		}
-	}
-	return e
-}
-
-func (z Zfs) checkDevices(p Zpool) (e error) {
-	for _, d := range p.Devices {
-		t := string(d.Type)
-		if ( t == "raidz" || t == "mirror" ) {
-			for _, d := range d.Devices {
-				if err := z.checkDevice(p, d); err != nil {
-					e = multierror.Append(e, err)
-				}
-			}
-		} else {
-			if err := z.checkDevice(p, d); err != nil {
-				e = multierror.Append(e, err)
-			}
-		}
-	}
-	return e
-}
-
-func (z Zfs) checkDevice(p Zpool, d Device) error {
-	if z.Verbose {
-		log.Println("checking device in pool: " + p.Name + " " + d.Name + " " + d.State.String())
-	}
-
-	if d.State == libzfs.VDevStateHealthy {
-		if z.IsAlerted(d.Name, d.State.String()) {
-			if err := z.sendAlert(p, true); err != nil {
-				return err
-			}
-			// assume the key exists because z.IsAlerted returned true
-			delete(z.AlertState, d.Name)
-		}
-		return nil
-	}
-
-	// if not healthy, if not alerted, send alert else return
-	if z.IsAlerted(d.Name, d.State.String()) == false {
-		if err := z.sendAlert(p, false); err != nil {
-			return err
-		}
-		z.AlertState[d.Name] = d.State.String()
-	}
-	return nil
-}
-
-func (z Zfs) sendAlert(pool Zpool, healthy bool) error {
-	msg := "host: " + z.Hostname + ": zpool " + pool.Name + " is not in a healthy state, got status: " + pool.State.String()
-	if healthy {
-		msg = "host: " + z.Hostname + ": zpool " + pool.Name + " is back to a healthy state, got status: " + pool.State.String()
-	}
-
-	if z.DaemonMode {
-		log.Println(msg)
-	}
-
-	if z.AlertConfig.NoAlert == true {
-		log.Println("skipping alert, --no-alert passed.")
-		return nil
-	}
-
-	if err := z.Alert.Message(msg); err != nil {
-		return errors.Wrap(err, "failed to send alert")
-	}
-	return nil
 }
