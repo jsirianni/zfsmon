@@ -4,49 +4,65 @@
 
 ## usage
 
-***TODO***: The usage section is out of date.
-
 Available flags:
 `zfsmon --help`
 ```
-zfs monitoring daemon
+zfs monitoring util
 
 Usage:
   zfsmon [flags]
 
 Flags:
-      --alert-file string   hook url (default "/tmp/zfsmon")
-      --channel string      slack channel
-  -h, --help                help for zfsmon
-      --no-alert            do not send alerts
-      --print               print the health report
-      --url string          hook url (default "/opt/zfsmon/alerts.dat")
-
+      --alert-type string      alert system to use
+      --daemon                 enable daemon mode
+  -h, --help                   help for zfsmon
+      --log-level string       logging level [error, warning, info, trace] (default "error")
+      --no-alert               do not send alerts
+      --slack-channel string   slack channel
+      --slack-url string       hook url
+      --state-file string      path for the state file (default "/tmp/zfsmon")
 ```
 
-Print result but take no action:
+### alert-type
+
+Available alert types:
+- Terminal: Prints alerts to your terminal. Requires `log-levl=info`
+- Slack: Sends alerts to a slack channel. Requires `slack-channel` and `slack-url`
+
+### Examples
+
+#### Root's Crontab w/ Slack
+
+Run every five minutes. `$HOOK` is retrieved from `/root/.zfsmon`
 ```
-zfsmon --print --no-alert
+. /root/.zfsmon
+*/5 * * * * /usr/local/bin/zfsmon --slack-channel=joe_testing --state-file /root/alert --slack-url=$HOOK --alert-type slack
 ```
 
-Print result and send alert if necessary:
-```
-zfsmon --print --channel alerts --url https://myslackwebhook.com/myhook
-```
+#### Console with Trace logging
 
-Run from cron every five minutes:
+Very verbose output can be enabled with `log-levl=trace`
 ```
-*/5 * * * * sudo /usr/local/bin/zfsmon
-```
+> zfsmon --alert-type terminal --log-level trace
 
-#### notes
-zfsmon should be run with `sudo` or with root. Recent versions of ZFSonLinux
-do not require root for basic read only operations, however, zfsmon has not been tested
-this way.
+TRACE: 2020/03/19 22:09:52 logger.go:36: zfsmon config: {"hostname":"zfs","daemon_mode":false,"state":{"file":"alert"},"pools":[{"name":"fake-mirror","state":7,"devices":[{"name":"mirror","type":"mirror","state":7,"Devices":[{"name":"/home/teamit/mirror-1-0","type":"file","state":7},{"name":"/home/teamit/mirror-1-1","type":"file","state":7}]}]}],"alert_config":{"no_alert":false},"alert_state":{"/home/teamit/mirror-0-0":"CANT_OPEN"}}
+TRACE: 2020/03/19 22:09:52 logger.go:36: checking pools
+TRACE: 2020/03/19 22:09:52 logger.go:36: checking pool 'fake-mirror'
+TRACE: 2020/03/19 22:09:52 logger.go:36: device 'mirror' has type 'mirror'
+TRACE: 2020/03/19 22:09:52 logger.go:36: checking device '/home/teamit/mirror-1-0' in pool 'fake-mirror'
+INFO: 2020/03/19 22:09:52 logger.go:41: device '/home/teamit/mirror-1-0' in pool 'fake-mirror' is healthy. Status: ONLINE
+TRACE: 2020/03/19 22:09:52 logger.go:36: checking device '/home/teamit/mirror-1-1' in pool 'fake-mirror'
+INFO: 2020/03/19 22:09:52 logger.go:41: device '/home/teamit/mirror-1-1' in pool 'fake-mirror' is healthy. Status: ONLINE
+```
 
 ## Install
 
-Download the latest release and place it in your path
+Download the latest release and place it in your path.
+
+It is recommended to run `zfsmon` with `root` or `sudo`. Recent release of OpenZFS
+does not require root privileges, however, this code as only been tested with root.
+I hope to change this going forward. If you have success using a non root user, please
+file an issue with your results. 
 
 ## Build
 
