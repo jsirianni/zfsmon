@@ -35,7 +35,7 @@ type Zfs struct {
 	// devices in this slice have had a sucessful alert triggered
 	AlertState map[string]string `json:"alert_state"`
 
-	Log logger.Logger `json:"log,omitempty"`
+	Log logger.Logger `json:"-"`
 }
 
 // Init initilizes the type
@@ -57,7 +57,7 @@ func (z Zfs) ZFSMon() error {
 	}
 
 	if z.Log.Level() == "trace" {
-		config, err := json.MarshalIndent(z, " ", " ")
+		config, err := json.Marshal(z)
 		if err != nil {
 			return err
 		}
