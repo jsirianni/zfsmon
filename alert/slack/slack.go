@@ -25,11 +25,6 @@ type payload struct {
 	Text    string `json:"text"`
 }
 
-func (slack Slack) Print() {
-	fmt.Println("slack hook url:", slack.HookURL)
-	fmt.Println("slack channel:", slack.Channel)
-}
-
 func (slack Slack) Message(message string) error {
 	// set debug, ignore parse errors
 	x := os.Getenv(envSlackDebug)

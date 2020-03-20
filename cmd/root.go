@@ -54,8 +54,8 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&alertType, "alert-type", "", "alert system to use")
 
 	// slack alert type
-	rootCmd.PersistentFlags().StringVar(&slackChannel, "channel", "", "slack channel")
-	rootCmd.PersistentFlags().StringVar(&hookURL, "url", "", "hook url")
+	rootCmd.PersistentFlags().StringVar(&slackChannel, "slack-channel", "", "slack channel")
+	rootCmd.PersistentFlags().StringVar(&hookURL, "slack-url", "", "hook url")
 }
 
 func initConfig() {

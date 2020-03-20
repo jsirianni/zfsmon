@@ -24,8 +24,8 @@ func TestConfigure(t *testing.T) {
             t.Errorf("expected l.logLevl to be set to " + level + " got " + l.logLevel)
         }
 
-        if l.LogLevel() != level {
-            t.Errorf("expected l.LogLevel() to return " + level + " got " + l.LogLevel())
+        if l.Level() != level {
+            t.Errorf("expected l.Level() to return " + level + " got " + l.Level())
         }
 
         if l.configured != true {

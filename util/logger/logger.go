@@ -11,10 +11,10 @@ import (
 
 // log levels
 const (
-    traceLVL   = "trace"
-    infoLVL    = "info"
-    warningLVL = "warning"
-    errorLVL   = "error"
+    TraceLVL   = "trace"
+    InfoLVL    = "info"
+    WarningLVL = "warning"
+    ErrorLVL   = "error"
 )
 
 // Logger type contains methods for logging
@@ -54,16 +54,16 @@ func (l Logger) Error(message interface{}) {
 // Configure configures the io.Writer values for each log level
 func (l *Logger) Configure(logLevel string) error {
     switch logLevel {
-	case traceLVL:
+	case TraceLVL:
 		l.Init(os.Stdout, os.Stdout, os.Stdout, os.Stderr)
-	case infoLVL:
+	case InfoLVL:
 		l.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
-	case warningLVL:
+	case WarningLVL:
 		l.Init(ioutil.Discard, ioutil.Discard, os.Stdout, os.Stderr)
-	case errorLVL:
+	case ErrorLVL:
 		l.Init(ioutil.Discard, ioutil.Discard, ioutil.Discard, os.Stderr)
     default:
-        supported := traceLVL + ", " + infoLVL + ", " + warningLVL + ", " + errorLVL
+        supported := TraceLVL + ", " + InfoLVL + ", " + WarningLVL + ", " + ErrorLVL
         return errors.New("log level is not valid, supported levels are " + supported)
 	}
 
@@ -104,8 +104,8 @@ func (l Logger) Configured() bool {
     return l.configured
 }
 
-// LogLevel returns the configured log level
-func (l Logger) LogLevel() string {
+// Level returns the configured log level
+func (l Logger) Level() string {
     if l.Configured() == false {
         return "not configured"
     }

@@ -1,18 +1,18 @@
 package terminal
 
 import (
-    "fmt"
+    "github.com/jsirianni/zfsmon/util/logger"
 )
 
 type Terminal struct {
 
 }
 
-func (t Terminal) Print() {
-    fmt.Println("standard out notifier")
-}
-
 func (t Terminal) Message(message string) error {
-    fmt.Println(message)
+    log := logger.Logger{}
+    if err := log.Configure(logger.InfoLVL); err != nil {
+        return err
+    }
+    log.Info(message)
     return nil
 }

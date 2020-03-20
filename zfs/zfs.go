@@ -56,7 +56,7 @@ func (z Zfs) ZFSMon() error {
 		return err
 	}
 
-	if z.Log.LogLevel() == "trace" {
+	if z.Log.Level() == "trace" {
 		config, err := json.MarshalIndent(z, " ", " ")
 		if err != nil {
 			return err
