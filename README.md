@@ -26,7 +26,7 @@ Flags:
 ### alert-type
 
 Available alert types:
-- Terminal: Prints alerts to your terminal. Requires `log-levl=info`
+- Terminal: Prints alerts to your terminal. Requires `log-level=info`
 - Slack: Sends alerts to a slack channel. Requires `slack-channel` and `slack-url`
 
 ### Examples
@@ -56,7 +56,7 @@ INFO: 2020/03/19 22:17:13 logger.go:41: device '/home/teamit/mirror-0-1' in pool
 
 #### Console with Trace logging
 
-Very verbose output can be enabled with `log-levl=trace`
+Very verbose output can be enabled with `log-level=trace`
 ```
 > zfsmon --alert-type terminal --log-level trace
 
