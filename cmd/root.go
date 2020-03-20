@@ -12,13 +12,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const defaultLogLevl = "error"
+
 var hookURL string
 var slackChannel string
 var stateFile string
 var alertType string
 var noAlert bool
 var daemon bool
-var verbose bool
+var logLevel string
 
 var z zfs.Zfs
 
@@ -27,7 +29,7 @@ var rootCmd = &cobra.Command{
 	Short: "zfs monitoring util",
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := z.ZFSMon(); err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
+			z.Log.Error(err)
 			os.Exit(1)
 		}
 		os.Exit(0)
@@ -36,7 +38,7 @@ var rootCmd = &cobra.Command{
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 }
@@ -45,7 +47,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&stateFile, "state-file", "/tmp/zfsmon", "path for the state file")
 	rootCmd.PersistentFlags().BoolVar(&daemon, "daemon", false, "enable daemon mode")
-	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "enable verbose output")
+	rootCmd.PersistentFlags().StringVar(&logLevel, "log-level", defaultLogLevl, "logging level [error, warning, info, trace]")
 
 	// alert flags
 	rootCmd.PersistentFlags().BoolVar(&noAlert, "no-alert", false, "do not send alerts")
@@ -69,8 +71,11 @@ func initConfig() {
 }
 
 func initFlags() error {
+	if err := z.Log.Configure(logLevel); err != nil {
+		return err
+	}
+
 	z.DaemonMode = daemon
-	z.Verbose    = verbose
 
 	if err := initSate(); err != nil {
 		return err

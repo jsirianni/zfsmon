@@ -1,8 +1,6 @@
 package zfs
 
 import (
-    "log"
-
     "github.com/pkg/errors"
 )
 
@@ -24,12 +22,10 @@ func (z Zfs) sendAlert(pool Zpool, healthy bool) error {
 		msg = "host: " + z.Hostname + ": zpool " + pool.Name + " is back to a healthy state, got status: " + pool.State.String()
 	}
 
-	if ( z.DaemonMode || z.Verbose ) {
-		log.Println(msg)
-	}
+    z.Log.Info(msg)
 
 	if z.AlertConfig.NoAlert {
-		log.Println("skipping alert, --no-alert passed.")
+		z.Log.Info("skipping alert, 'no alert' set to true")
 		return nil
 	}
 

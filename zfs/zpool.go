@@ -18,9 +18,9 @@ type Device struct {
 	Devices []Device `json:",omitempty"`
 }
 
-// RunningPools returns a slice of Zpool objects that are detected
+// runningPools returns a slice of Zpool objects that are detected
 // on the running system
-func RunningPools() ([]Zpool, error) {
+func runningPools() ([]Zpool, error) {
 	globalPools, err := libzfs.PoolOpenAll()
 	defer libzfs.PoolCloseAll(globalPools)
 	if err != nil {

@@ -1,26 +1,26 @@
 package zfs
 
 import (
-	"log"
 	"sync"
 	"time"
+	"encoding/json"
 
 	"github.com/jsirianni/zfsmon/alert"
+	"github.com/jsirianni/zfsmon/util/logger"
 
 	"github.com/pkg/errors"
 )
 
 // Zfs type holds the global configuration for the zfs package
 type Zfs struct {
-	Hostname string `json:"-"`
+	Hostname string `json:"hostname"`
 
-	DaemonMode bool `json:"-"`
-	Verbose    bool `json:"-"`
+	DaemonMode bool `json:"daemon_mode"`
 
 	State struct {
-		File string `json:"-"`
+		File string `json:"file"`
 		lock sync.Mutex `json:"-"`
-	} `json:"-"`
+	} `json:"state"`
 
 	Pools []Zpool `json:"pools"`
 
@@ -29,34 +29,49 @@ type Zfs struct {
 	// users. See alert/alert.go
 	Alert       alert.Alert `json:"-"`
 	AlertConfig struct {
-		NoAlert bool `json:"-"`
-	} `json:"-"`
+		NoAlert bool `json:"no_alert"`
+	} `json:"alert_config"`
 
 	// devices in this slice have had a sucessful alert triggered
 	AlertState map[string]string `json:"alert_state"`
+
+	Log logger.Logger `json:"log,omitempty"`
 }
 
 // Init initilizes the type
 func (z *Zfs) Init() error {
 	// TODO: validate all params
 	z.AlertState = make(map[string]string)
+
+	if z.Log.Configured() == false {
+		z.Log.Configure("error")
+		z.Log.Info("logging level set to error")
+	}
 	return nil
 }
 
 // ZFSMon builds an array of zpool objects and performs health checks on them
 func (z Zfs) ZFSMon() error {
-	if err := z.ReadState(); err != nil {
+	if err := z.readState(); err != nil {
 		return err
+	}
+
+	if z.Log.LogLevel() == "trace" {
+		config, err := json.MarshalIndent(z, " ", " ")
+		if err != nil {
+			return err
+		}
+		z.Log.Trace("zfsmon config: " + string(config))
 	}
 
 	if z.DaemonMode {
 		for {
 			if err := z.checkPools(); err != nil {
-				log.Println(err)
+				z.Log.Error(err)
 			}
 
-			if err := z.SaveStateFile(); err != nil {
-				log.Println(err)
+			if err := z.saveStateFile(); err != nil {
+				z.Log.Error(err)
 			}
 
 			time.Sleep(time.Second * time.Duration(10))
@@ -64,11 +79,11 @@ func (z Zfs) ZFSMon() error {
 	}
 
 	if err := z.checkPools(); err != nil {
-		if e := z.SaveStateFile(); e != nil {
+		if e := z.saveStateFile(); e != nil {
 			return errors.Wrap(err, e.Error())
 		}
 		return err
 	}
 
-	return z.SaveStateFile()
+	return z.saveStateFile()
 }

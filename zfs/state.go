@@ -2,24 +2,22 @@ package zfs
 
 import (
 	"encoding/json"
-	"fmt"
-	"os"
 
 	"github.com/jsirianni/zfsmon/util/file"
 )
 
-func (z *Zfs) ReadState() error {
+func (z *Zfs) readState() error {
 	var err error
 	var lastSavedState Zfs
 
-	z.Pools, err = RunningPools()
+	z.Pools, err = runningPools()
 	if err != nil {
 		return err
 	}
 
-	lastSavedState, err = z.ReadStateFile()
+	lastSavedState, err = z.readStateFile()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		z.Log.Error(err)
 		return nil
 	}
 
@@ -27,7 +25,7 @@ func (z *Zfs) ReadState() error {
 	return nil
 }
 
-func (z *Zfs) SaveStateFile() error {
+func (z *Zfs) saveStateFile() error {
 	z.State.lock.Lock()
 	defer z.State.lock.Unlock()
 
@@ -38,7 +36,7 @@ func (z *Zfs) SaveStateFile() error {
 	return file.WriteFile(b, z.State.File)
 }
 
-func (z *Zfs) ReadStateFile() (Zfs, error) {
+func (z *Zfs) readStateFile() (Zfs, error) {
 	z.State.lock.Lock()
 	defer z.State.lock.Unlock()
 
