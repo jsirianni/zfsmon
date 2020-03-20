@@ -39,6 +39,21 @@ Run every five minutes. `$HOOK` is retrieved from `/root/.zfsmon`
 */5 * * * * /usr/local/bin/zfsmon --slack-channel=joe_testing --state-file /root/alert --slack-url=$HOOK --alert-type slack
 ```
 
+#### Console with Slack and Info logging
+
+Info logging can be used to get full output
+```
+root@zfs:/home/teamit# ./zfsmon --slack-channel=joe_testing --state-file alert --slack-url=$HOOK --alert-type slack --log-level=info
+
+ERROR: 2020/03/19 22:17:13 logger.go:51: open alert: no such file or directory
+INFO: 2020/03/19 22:17:13 logger.go:41: device '/home/teamit/mirror-1-0' in pool 'fake-mirror' is healthy. Status: ONLINE
+INFO: 2020/03/19 22:17:13 logger.go:41: device '/home/teamit/mirror-1-1' in pool 'fake-mirror' is healthy. Status: ONLINE
+WARNING: 2020/03/19 22:17:13 logger.go:46: device '/home/teamit/mirror-0-0' in pool 'fake' is not healthy. Status: CANT_OPEN
+INFO: 2020/03/19 22:17:13 logger.go:41: host: zfs | zpool fake is not in a healthy state, got status: CANT_OPEN
+INFO: 2020/03/19 22:17:13 logger.go:41: device '/home/teamit/mirror-0-1' in pool 'fake' is healthy. Status: ONLINE
+
+```
+
 #### Console with Trace logging
 
 Very verbose output can be enabled with `log-levl=trace`
@@ -62,7 +77,7 @@ Download the latest release and place it in your path.
 It is recommended to run `zfsmon` with `root` or `sudo`. Recent release of OpenZFS
 does not require root privileges, however, this code as only been tested with root.
 I hope to change this going forward. If you have success using a non root user, please
-file an issue with your results. 
+file an issue with your results.
 
 ## Build
 
