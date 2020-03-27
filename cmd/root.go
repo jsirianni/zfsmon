@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/jsirianni/zfsmon/alert/slack"
+	"github.com/jsirianni/zfsmon/alert/relay"
 	"github.com/jsirianni/zfsmon/alert/terminal"
 	"github.com/jsirianni/zfsmon/zfs"
 
@@ -21,6 +22,11 @@ var alertType string
 var noAlert bool
 var daemon bool
 var logLevel string
+
+var (
+	relayHost string
+	relayAPIKey string
+)
 
 var z zfs.Zfs
 
@@ -45,7 +51,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&stateFile, "state-file", "/tmp/zfsmon", "path for the state file")
+	rootCmd.PersistentFlags().StringVar(&stateFile, "state-file", "", "path for the state file")
 	rootCmd.PersistentFlags().BoolVar(&daemon, "daemon", false, "enable daemon mode")
 	rootCmd.PersistentFlags().StringVar(&logLevel, "log-level", defaultLogLevl, "logging level [error, warning, info, trace]")
 
@@ -56,6 +62,10 @@ func init() {
 	// slack alert type
 	rootCmd.PersistentFlags().StringVar(&slackChannel, "slack-channel", "", "slack channel")
 	rootCmd.PersistentFlags().StringVar(&hookURL, "slack-url", "", "hook url")
+
+	// relay alert type
+	rootCmd.PersistentFlags().StringVar(&relayHost, "relay-host", "", "relay host URL")
+	rootCmd.PersistentFlags().StringVar(&relayAPIKey, "relay-api-key", "", "relay api key")
 }
 
 func initConfig() {
@@ -90,6 +100,9 @@ func initFlags() error {
 }
 
 func initSate() error {
+	if stateFile == "" {
+		return errors.New("state file must be configured")
+	}
 	z.State.File = stateFile
 	return nil
 }
@@ -116,6 +129,9 @@ func initAlert() error {
 	if alertType == "slack" {
 		return initSlack()
 	}
+	if alertType == "relay" {
+		return initRelay()
+	}
 	if alertType == "terminal" {
 		return initTerminal()
 	}
@@ -130,6 +146,19 @@ func initSlack() error {
 		return errors.New("slack channel must be set when alert type is 'slack'")
 	}
 	z.Alert = slack.Slack{hookURL, slackChannel}
+	return nil
+}
+
+func initRelay() error {
+	if relayAPIKey == "" {
+		return errors.New("relay api key must be set when alert type is 'relay'")
+	}
+	r := relay.Relay{
+		BaseURL: relayHost,
+		APIKey: relayAPIKey,
+	}
+	z.Alert = r
+	z.Log.Trace(r.APIKey)
 	return nil
 }
 
