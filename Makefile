@@ -29,8 +29,6 @@ build-zfs-7:
 
 	@rm -f go.mod go.sum Dockerfile
 
-test:
-	go test ./...
 
 lint:
 	golint ./...
@@ -41,9 +39,6 @@ fmt:
 clean:
 	@rm -f go.mod go.sum Dockerfile
 	@rm -rf artifacts/*
-
-quick:
-	go build -o zfsmon
 
 prune-docker:
 	docker system prune --force

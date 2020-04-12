@@ -1,7 +1,6 @@
 package relay
 
 import (
-    "fmt"
     "net/http"
     "encoding/json"
     "bytes"
@@ -9,6 +8,7 @@ import (
     "io/ioutil"
 
     "github.com/pkg/errors"
+    "github.com/google/uuid"
 )
 
 const DefaultBaseURL = "https://relay.teamitgr.com"
@@ -24,21 +24,18 @@ type payload struct {
 }
 
 func (relay Relay) Message(message string) error {
-    if relay.BaseURL == "" {
-        relay.BaseURL = DefaultBaseURL
+    if message == "" {
+        return errors.New("message is empty")
     }
 
-    if relay.APIKey == "" {
-        return errors.New("relay API Key is not set!")
+    if err := relay.init(); err != nil {
+        return err
     }
 
     b, err := json.Marshal(payload{Text:message})
     if err != nil {
         return err
     }
-
-    fmt.Println(relay.BaseURL, relay.APIKey)
-    fmt.Println(string(b))
 
     req, err := http.NewRequest("POST", relay.BaseURL + "/message", bytes.NewBuffer(b))
     if err != nil {
@@ -47,13 +44,31 @@ func (relay Relay) Message(message string) error {
     req.Header.Set("Content-Type", "application/json")
     req.Header.Set(apiKeyHeader, relay.APIKey)
 
+    return send(req)
+}
+
+func (relay *Relay) init() error {
+    if relay.BaseURL == "" {
+        relay.BaseURL = DefaultBaseURL
+    }
+
+    if relay.APIKey == "" {
+        return errors.New("relay API Key is not set!")
+    }
+
+    if _, err := uuid.Parse(relay.APIKey); err != nil {
+        return errors.Wrap(err, "relay requires a valid uuid for authentication")
+    }
+    return nil
+}
+
+func send(req *http.Request) error {
     client := &http.Client{}
     resp, err := client.Do(req)
     if err != nil {
-        return err
+        return nil
     }
     defer resp.Body.Close()
-
     if resp.StatusCode != 200 {
         body, _ := ioutil.ReadAll(resp.Body)
         if body == nil {
