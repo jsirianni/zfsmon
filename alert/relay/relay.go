@@ -6,7 +6,6 @@ import (
     "bytes"
     "strconv"
     "io/ioutil"
-    "time"
 
     "github.com/pkg/errors"
 )
