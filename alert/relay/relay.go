@@ -1,12 +1,12 @@
 package relay
 
 import (
-    "fmt"
     "net/http"
     "encoding/json"
     "bytes"
     "strconv"
     "io/ioutil"
+    "time"
 
     "github.com/pkg/errors"
 )
@@ -37,9 +37,6 @@ func (relay Relay) Message(message string) error {
         return err
     }
 
-    fmt.Println(relay.BaseURL, relay.APIKey)
-    fmt.Println(string(b))
-
     req, err := http.NewRequest("POST", relay.BaseURL + "/message", bytes.NewBuffer(b))
     if err != nil {
         return err
@@ -47,13 +44,16 @@ func (relay Relay) Message(message string) error {
     req.Header.Set("Content-Type", "application/json")
     req.Header.Set(apiKeyHeader, relay.APIKey)
 
+    return send(req)
+}
+
+func send(req *http.Request) error {
     client := &http.Client{}
     resp, err := client.Do(req)
     if err != nil {
-        return err
+        return nil
     }
     defer resp.Body.Close()
-
     if resp.StatusCode != 200 {
         body, _ := ioutil.ReadAll(resp.Body)
         if body == nil {
