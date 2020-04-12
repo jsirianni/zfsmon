@@ -1,6 +1,7 @@
 package zfs
 
 import (
+    "time"
     "github.com/pkg/errors"
 )
 
@@ -30,7 +31,11 @@ func (z Zfs) sendAlert(pool Zpool, healthy bool) error {
 	}
 
 	if err := z.Alert.Message(msg); err != nil {
-		return errors.Wrap(err, "failed to send alert")
+        z.Log.Error(errors.Wrap(err, "will try again in five seconds"))
+        time.Sleep(time.Second * 5)
+        if err := z.Alert.Message(msg); err != nil {
+            return errors.Wrap(err, "failed to send alert")
+        }
 	}
 	return nil
 }
