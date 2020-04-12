@@ -8,6 +8,7 @@ import (
     "io/ioutil"
 
     "github.com/pkg/errors"
+    "github.com/google/uuid"
 )
 
 const DefaultBaseURL = "https://relay.teamitgr.com"
@@ -23,12 +24,12 @@ type payload struct {
 }
 
 func (relay Relay) Message(message string) error {
-    if relay.BaseURL == "" {
-        relay.BaseURL = DefaultBaseURL
+    if message == "" {
+        return errors.New("message is empty")
     }
 
-    if relay.APIKey == "" {
-        return errors.New("relay API Key is not set!")
+    if err := relay.init(); err != nil {
+        return err
     }
 
     b, err := json.Marshal(payload{Text:message})
@@ -44,6 +45,21 @@ func (relay Relay) Message(message string) error {
     req.Header.Set(apiKeyHeader, relay.APIKey)
 
     return send(req)
+}
+
+func (relay *Relay) init() error {
+    if relay.BaseURL == "" {
+        relay.BaseURL = DefaultBaseURL
+    }
+
+    if relay.APIKey == "" {
+        return errors.New("relay API Key is not set!")
+    }
+
+    if _, err := uuid.Parse(relay.APIKey); err != nil {
+        return errors.Wrap(err, "relay requires a valid uuid for authentication")
+    }
+    return nil
 }
 
 func send(req *http.Request) error {
