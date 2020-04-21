@@ -1,6 +1,8 @@
 # zfsmon
 
-`zfsmon` is a utility that sends alerts when a zpool becomes degraded.
+`zfsmon` is a utility that triggers alerts when a zpool becomes degraded
+
+[![Build Status](https://travis-ci.com/jsirianni/zfsmon.svg?branch=master)](https://travis-ci.com/jsirianni/zfsmon)
 
 ## usage
 
