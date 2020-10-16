@@ -1,8 +1,10 @@
 package zfs
 
 import (
+	"os"
 	"sync"
 	"time"
+	"strconv"
 	"encoding/json"
 
 	"github.com/jsirianni/zfsmon/alert"
@@ -47,6 +49,14 @@ func (z *Zfs) Init() error {
 		z.Log.Configure("error")
 		z.Log.Info("logging level set to error")
 	}
+
+	// purposely ignore errors
+    if s, _ := strconv.ParseBool(os.Getenv("ZFSMON_TEST_ALERT")); s {
+		z.Log.Configure("trace")
+		z.Log.Info("Environment set to ZFSMON_TEST_ALERT true, testing alert and then exiting.")
+		return z.Alert.Message("zfsmon test alert")
+    }
+
 	return nil
 }
 
